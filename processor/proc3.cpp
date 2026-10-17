@@ -97,8 +97,8 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
             break;
 
         case PUSHr:
-            StackPush(&v_m->stk, (int)v_m->code[v_m->pc]);
-            v_m->pc += 1;
+            StackPush(&v_m->stk, v_m->registers[(int)v_m->code[v_m->pc + 1]]);
+            v_m->pc += 2;
             break;
 
         case MUL:
@@ -132,14 +132,18 @@ void CodeDump(proccessor* v_m) {
     size_t arg_flag = 0;
 
     fprintf(file, "========= BYTE-CODE =========\n");
-    for (size_t i = 0; i < v_m->buffer_size, empty_flag < 2; i++) {
+    for (size_t i = 0; i < v_m->buffer_size && empty_flag < 2; i++) {
 
         fprintf(file, "[%llu] %lg", i, v_m->code[i]);
 
-        const char* name = CommandName((int)v_m->code[i], &arg_flag);
-        if (*name != '\0') 
-            fprintf(file, "   (%s)", name);
-
+        if (arg_flag == 1) {
+            arg_flag = 0;
+        } else {
+            const char* name = CommandName((int)v_m->code[i], &arg_flag);
+            if (*name != '\0') 
+                fprintf(file, "   (%s)", name);
+        }
+        
         if (i == v_m->pc) 
             fprintf(file, "      [<--------");
         

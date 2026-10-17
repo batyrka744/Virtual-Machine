@@ -23,96 +23,153 @@ void Assembler(FILE* file_output, Line* index, char* buffer, size_t nLines) {
     my_assert(file_output != NULL,);
 
 
-    for (size_t i = 0; i < nLines; i++) {
+    LabelsCase Case = {0};
 
-        char command_name[COMMAND_LENGTH] = {0};
-        char arg_str[COMMAND_LENGTH] = {0};
-        double value = 0;
 
-        int get_command = sscanf(index[i].str, "%63s %lg", command_name, &value);
+    size_t break_flag = 0;
+    size_t ip = 0;
 
-        if (get_command == EOF) {
-            continue; // пустая строка между командами
+    for (size_t j = 1; j < 3; j++) {
+        ip = 0;
+        for (size_t i = 0; i < nLines && break_flag == 0; i++) {
+            ParseLine(index[i].str, j, &Case, file_output, &ip, &break_flag);
         }
-
-        if (get_command == 2) {
-
-            if (strcmp(command_name, "PUSH") == 0) {
-                fprintf(file_output, "%d %lg ", PUSH, value); 
-
-            } else if (strcmp(command_name, "JMP") == 0) {
-                fprintf(file_output, "%d %d ", JMP, (int)value);
-
-            } else {
-                my_assert(0,);
-            }
-            
-        } else if (get_command == 1) {
-
-            if (strcmp(command_name, "ADD") == 0) {
-                fprintf(file_output, "%d ", ADD);     
-
-            } else if (strcmp(command_name, "SUB") == 0) {
-                fprintf(file_output, "%d ", SUB);
-
-            } else if (strcmp(command_name, "MUL") == 0) {
-                fprintf(file_output, "%d ", MUL); 
-
-            } else if (strcmp(command_name, "DIV") == 0) {
-                fprintf(file_output, "%d ", DIV);
-
-            } else if (strcmp(command_name, "OUT") == 0) {
-                fprintf(file_output, "%d ", OUT);
-
-            } else if (strcmp(command_name, "HLT") == 0) {
-                fprintf(file_output, "%d ", HLT); 
-                break;
-
-
-            } else if (strcmp(command_name, "PUSH") == 0) {
-
-                sscanf(index[i].str, "%s %s", command_name, arg_str);
-                int check_valid = 0;
-
-                for (size_t j = 0; j < NUM_REGIST; j++) {
-                    if (strcmp(arg_str, registers[j].name) == 0) {
-                        fprintf(file_output, "%d %d ", PUSHr, registers[j].num);
-                        check_valid++;
-                        break;
-                    } 
-                }
-                my_assert(check_valid > 0,);
-
-
-            } else if (strcmp(command_name, "POP") == 0) {
-
-                sscanf(index[i].str, "%s %s", command_name, arg_str);
-                int check_valid = 0;
-
-                for (size_t j = 0; j < NUM_REGIST; j++) {
-                    if (strcmp(arg_str, registers[j].name) == 0) {
-                        fprintf(file_output, "%d %d ", POP, registers[j].num);
-                        check_valid++;
-                        break;
-                    } 
-                }
-                my_assert(check_valid > 0,);
-
-
-            } else {
-                printf(RED "Assembler Error: wrong command's name\n" RESET);
-                break;
-            }
-
-        } else {
-            printf(RED "Assembler Error: wrong number of words or empty line\n" RESET);
-            break;
-        }
-    } // end of assembler's for 
+        break_flag = 0;
+    }
+    
 
     free(index);
     free(buffer);
 }
+
+
+int ParseLine(const char* line, int pass_num, LabelsCase* Case, FILE* file_output, size_t* ip, size_t* break_flag) {
+    size_t len = strlen(line);
+    
+    char label_name[COMMAND_LENGTH] = {0};
+
+    #define NO_ARGS(command) do {\
+        if (pass_num == 2) {\
+            fprintf(file_output, "%d ", (command));\
+        }\
+        (*ip) += 1;\
+    } while (0)
+
+    #define WITH_ARGS(command, arg) do {\
+        if (pass_num == 2) {\
+            fprintf(file_output, "%d %lg ", (command), (StackElem_t)(arg));\
+        }\
+        (*ip) += 2;\
+    } while (0)
+
+    
+    sscanf(line, "%s", label_name);
+    char* colon = strchr(label_name, ':');
+
+    if (colon != NULL) {
+        if (pass_num == 1) {
+            *colon = '\0';
+            add_label(Case, label_name, *ip);
+        }
+        
+        return 0;
+
+    } else {
+        char command_name[COMMAND_LENGTH] = {0};
+        char arg_str[COMMAND_LENGTH] = {0};
+        
+
+        int get_command = sscanf(line, "%s", command_name);
+
+        if (get_command != 1) {
+            return 0;
+        }
+
+        if (strcmp(command_name, "PUSH") == 0) {
+
+            StackElem_t value = 0;
+            if (sscanf(line, "%*s %lg", &value) == 1)
+                WITH_ARGS(PUSH, value);
+
+            else if (sscanf(line, "%*s %s", arg_str) == 1) {
+                int check_valid = 0;
+
+                for (size_t j = 0; j < NUM_REGIST; j++) {
+                    if (strcmp(arg_str, registers[j].name) == 0) {
+                        WITH_ARGS(PUSHr, registers[j].num);
+                        check_valid++;
+                        break;
+                    } 
+                }
+                my_assert(check_valid > 0,);
+
+            } else
+                my_assert(0, -1);
+
+
+        } else if (strcmp(command_name, "ADD") == 0) {
+            NO_ARGS(ADD);    
+
+        } else if (strcmp(command_name, "SUB") == 0) {
+            NO_ARGS(SUB);
+
+        } else if (strcmp(command_name, "MUL") == 0) {
+            NO_ARGS(MUL);
+
+        } else if (strcmp(command_name, "DIV") == 0) {
+            NO_ARGS(DIV);
+
+        } else if (strcmp(command_name, "OUT") == 0) {
+            NO_ARGS(OUT);
+
+        } else if (strcmp(command_name, "HLT") == 0) {
+            NO_ARGS(HLT); 
+            if (pass_num == 2)
+                (*break_flag)++;
+            
+
+        } else if (strcmp(command_name, "POP") == 0) {
+
+            my_assert(sscanf(line, "%s %s", command_name, arg_str), -1);
+            int check_valid = 0;
+
+            for (size_t j = 0; j < NUM_REGIST; j++) {
+                if (strcmp(arg_str, registers[j].name) == 0) {
+                    WITH_ARGS(POP, registers[j].num);
+                    check_valid++;
+                    break;
+                } 
+            }
+            my_assert(check_valid > 0,);
+
+
+        } else if (strcmp(command_name, "JMP") == 0) {
+
+            my_assert(sscanf(line, "%*s %s", arg_str), -1);
+
+            int address = 0;
+            if (pass_num == 2) {
+                find_label(Case, arg_str);
+                my_assert(address != -1, -1);
+            }
+            WITH_ARGS(JMP, address);
+            
+
+        } else {
+            printf(RED "Assembler Error: wrong command's name\n" RESET);
+            (*break_flag)++;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -183,4 +240,26 @@ char* ReadFromFile(const char* name, size_t* out_size) {
     fclose(file);
 
     return buffer;
+}
+
+void add_label(LabelsCase* Case, const char* name, size_t address) {
+    my_assert(name != NULL,);
+    my_assert(Case->count < MAX_LABELS,);
+
+    Case->labels[Case->count].address = address;
+    strcpy(Case->labels[Case->count].name, name);
+
+    (Case->count)++;
+}
+
+int find_label(const LabelsCase* Case, const char* name) {
+    my_assert(Case != NULL, -1);
+    my_assert(name != NULL, 0);
+
+    for (size_t i = 0; i < Case->count; i++) {
+        if (strcmp(name, Case->labels[i].name) == 0) {
+            return Case->labels[i].address;
+        }
+    }
+    return -1;
 }
