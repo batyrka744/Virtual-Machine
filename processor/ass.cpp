@@ -12,7 +12,7 @@ int main() {
 
     char* buffer = ReadFromFile(before_ass, &out_size);
     Line* index = SplitLines(buffer, out_size, &nLines);
-    
+
     Assembler(file_write, index, buffer, nLines);
     
     fclose(file_write);
@@ -25,7 +25,7 @@ void Assembler(FILE* file_output, Line* index, char* buffer, size_t nLines) {
 
     for (size_t i = 0; i < nLines; i++) {
 
-        char command_name[COMMAND_LENGTH] = {0};//name
+        char command_name[COMMAND_LENGTH] = {0};
         char arg_str[COMMAND_LENGTH] = {0};
         double value = 0;
 
@@ -75,8 +75,8 @@ void Assembler(FILE* file_output, Line* index, char* buffer, size_t nLines) {
                 int check_valid = 0;
 
                 for (size_t j = 0; j < NUM_REGIST; j++) {
-                    if (strcmp(arg_str, regist[j]) == 0) {
-                        fprintf(file_output, "%d %d ", PUSHr, j + 1);
+                    if (strcmp(arg_str, registers[j].name) == 0) {
+                        fprintf(file_output, "%d %d ", PUSHr, registers[j].num);
                         check_valid++;
                         break;
                     } 
@@ -90,10 +90,10 @@ void Assembler(FILE* file_output, Line* index, char* buffer, size_t nLines) {
                 int check_valid = 0;
 
                 for (size_t j = 0; j < NUM_REGIST; j++) {
-                    if (strcmp(arg_str, regist[j]) == 0) {
-                        fprintf(file_output, "%d %d ", POP, j + 1);
+                    if (strcmp(arg_str, registers[j].name) == 0) {
+                        fprintf(file_output, "%d %d ", POP, registers[j].num);
                         check_valid++;
-                        break;//massiv structur registrov
+                        break;
                     } 
                 }
                 my_assert(check_valid > 0,);

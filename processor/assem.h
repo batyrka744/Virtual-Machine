@@ -30,6 +30,12 @@ const char* after_ass = "input2.txt";
 
 struct Line {char* str; size_t len;};
 
+struct Registr {
+    const char* name;
+    int num;
+    size_t len;
+};
+
 enum commands {
     HLT = 0,
     PUSH = 1,
@@ -43,7 +49,24 @@ enum commands {
     JMP = 9};
 
 
-const char* regist[NUM_REGIST] = {"AX", "BX", "CX", "DX", "", "", "", ""};
+
+enum reg_nums {
+    AX = 1,
+    BX = 2,
+    CX = 3,
+    DX = 4
+};
+
+
+
+Registr registers[NUM_REGIST] = {
+    {.name = "AX", .num = AX, .len = 2}, 
+    {.name = "BX", .num = BX, .len = 2},
+    {.name = "CX", .num = CX, .len = 2},
+    {.name = "DX", .num = DX, .len = 2},
+};
+
+
 
 char* ReadFromFile(const char* name, size_t* out_size);
 Line* SplitLines(char* buffer, size_t file_size, size_t* nLines);

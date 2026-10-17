@@ -5,6 +5,7 @@
 #include <errno.h>
 
 #define COMMAND_LENGTH 64
+#define STACK_DEBUG
 
 #define BLACK "\x1b[30m"
 #define RED "\x1b[31m"
@@ -36,10 +37,6 @@ struct proccessor
     double registers[NUM_REGIST] = {0}; 
 };
 
-const char* before_ass = "input1.txt";
-const char* after_ass = "input2.txt";
-
-
 
 Line* SplitLines(char* buffer, size_t file_size, size_t* nLines);
 
@@ -56,3 +53,5 @@ void clean_file(void);
 const char* CommandName(int command, size_t* arg_flag);
 
 void Assembler(FILE* file_output, Line* index, char* buffer, size_t nLines);
+
+void execution(proccessor* v_m, int command, size_t* break_flag, errors* err);

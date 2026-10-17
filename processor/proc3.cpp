@@ -1,157 +1,162 @@
-#include "assem.h"
+#include "process2.h"
 
-const char* asm_src = "C:\\Users\\Admin\\OneDrive\\Desktop\\C\\RT\\huawei\\Proccessor\\processor\\input1.txt";
-const char* bin_dst = "C:\\Users\\Admin\\OneDrive\\Desktop\\C\\RT\\huawei\\Proccessor\\processor\\input2.txt";
 
 int main() {
-    FILE* file_write = fopen(bin_dst, "w");
-    assert(file_write != NULL);
-    Assembler(asm_src, file_write);
-    fclose(file_write);
 
+    clean_file();  
+
+    proccessor intel = {0};
+    size_t buffer_size = 0;
+    
+    intel.code = lf_buffer(after_ass, &buffer_size);  
+    assert(intel.code != NULL);
+
+    intel.buffer_size = buffer_size;
+
+    ReadFromBuffer(&intel);
+
+    free(intel.code);
     return 0;
 }
 
-void Assembler(const char* name, FILE* file_output) {
-    assert(name != NULL);
-    assert(file_output != NULL);
+void ReadFromBuffer(proccessor* v_m) {
+    assert(v_m != NULL);
 
-    size_t out_size = 0; 
-    size_t nLines = 0;
+    STACK_INIT(v_m->stk, 1);
 
-    char* buffer = ReadFromFile(name, &out_size);
-    Line* index = SplitLines(buffer, out_size, &nLines);
+    int command = 0;
 
-    
+    errors err = ERR_OK;
+    size_t break_flag = 0;
 
-    for (size_t i = 0; i < nLines; i++) {
+    StackElem_t a = 0;
+    StackElem_t b = 0;
+
+    StackElem_t popped = 0;
+
+    while (v_m->pc < v_m->buffer_size && break_flag == 0) {
+
+        CodeDump(v_m);
+
+        command = (int)v_m->code[v_m->pc];
         
-        char s[COMMAND_LENGTH] = {0};
-        char arg_str[COMMAND_LENGTH] = {0};
-        double value = 0;
+        execution(v_m, command, &break_flag, &err);
+    }
+    my_assert(err == ERR_OK,);
+}
 
-        int get_command = sscanf(index[i].str, "%63s %lg", s, &value);
+void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
 
-        if (get_command == EOF) {
-            continue; // пустая строка между командами
-        }
+    StackElem_t a = 0;
+    StackElem_t b = 0;
+    StackElem_t popped = 0;
 
-        if (get_command == 2) {
+    switch(command) {
 
-            if (strcmp(s, "PUSH") == 0) {
-                fprintf(file_output, "%d %lg\n", PUSH, value); 
-
-            } else if (strcmp(s, "JMP") == 0) {
-                fprintf(file_output, "%d %d\n", JMP, (int)value);
-
-            } else {
-                my_assert(0,);
-            }
-            
-        } else if (get_command == 1) {
-
-            if (strcmp(s, "ADD") == 0) {
-                fprintf(file_output, "%d\n", ADD);
-
-            } else if (strcmp(s, "SUB") == 0) {
-                fprintf(file_output, "%d\n", SUB);
-
-            } else if (strcmp(s, "MUL") == 0) {
-                fprintf(file_output, "%d\n", MUL);
-
-            } else if (strcmp(s, "DIV") == 0) {
-                fprintf(file_output, "%d\n", DIV);
-
-            } else if (strcmp(s, "OUT") == 0) {
-                fprintf(file_output, "%d\n", OUT);
-
-            } else if (strcmp(s, "HLT") == 0) {
-                fprintf(file_output, "%d\n", HLT); 
-                break;
-
-
-            } else if (strcmp(s, "PUSH") == 0) {
-
-                sscanf(index[i].str, "%s %s", s, arg_str);
-                int check_valid = 0;
-
-                for (size_t j = 0; j < NUM_REGIST; j++) {
-                    if (strcmp(arg_str, regist[j]) == 0) {
-                        fprintf(file_output, "%d %d\n", PUSHr, j + 1);
-                        check_valid++;
-                        break;
-                    } 
-                }
-                my_assert(check_valid > 0,);
-
-
-            } else if (strcmp(s, "POP") == 0) {
-
-                sscanf(index[i].str, "%s %s", s, arg_str);
-                int check_valid = 0;
-
-                for (size_t j = 0; j < NUM_REGIST; j++) {
-                    if (strcmp(arg_str, regist[j]) == 0) {
-                        fprintf(file_output, "%d %d\n", POP, j + 1);
-                        check_valid++;
-                        break;
-                    } 
-                }
-                my_assert(check_valid > 0,);
-
-
-            } else {
-                printf(RED "Assembler Error: wrong command's name\n" RESET);
-                break;
-            }
-
-        } else {
-            printf(RED "Assembler Error: wrong number of words or empty line\n" RESET);
+        case HLT:
+            StackDestroy(&v_m->stk); 
+            (*break_flag)++;
+            v_m->pc += 1;
             break;
-        }
-    }
 
-    free(index);
-    free(buffer);
+        case PUSH:
+            StackPush(&v_m->stk, v_m->code[v_m->pc + 1]);
+            v_m->pc += 2;
+            break;
+
+        case ADD:
+            b = StackPop(&v_m->stk, err);
+            a = StackPop(&v_m->stk, err);
+            StackPush(&v_m->stk, a + b);
+            v_m->pc += 1;
+            break;
+
+        case SUB:
+            b = StackPop(&v_m->stk, err); 
+            a = StackPop(&v_m->stk, err); 
+            StackPush(&v_m->stk, a - b);
+            v_m->pc += 1;
+            break;
+
+        case DIV:
+            b = StackPop(&v_m->stk, err);
+            a = StackPop(&v_m->stk, err);
+            StackPush(&v_m->stk, a / b);
+            v_m->pc += 1;
+            break;
+
+        case OUT:
+            printf(GREEN "%lg\n" RESET, StackPop(&v_m->stk, err));
+            v_m->pc += 1;
+            break;
+
+        case POP:
+            popped = StackPop(&v_m->stk, err);
+            v_m->registers[(int)v_m->code[v_m->pc + 1]] = popped;
+            v_m->pc += 2;
+            break;
+
+        case PUSHr:
+            StackPush(&v_m->stk, (int)v_m->code[v_m->pc]);
+            v_m->pc += 1;
+            break;
+
+        case MUL:
+            b = StackPop(&v_m->stk, err);
+            a = StackPop(&v_m->stk, err);
+            StackPush(&v_m->stk, a * b);
+            v_m->pc += 1;
+            break;
+
+        case JMP:
+            v_m->pc = (int)v_m->code[v_m->pc + 1];
+            break;
+            
+        default:
+            printf("switch-case err\n");
+            v_m->pc += 1;
+            break;
+    }
 }
 
 
 
-/**
- * @brief splits buffer to strings and puts pointers to them in array
- * 
- * @param[in] buffer array with text
- * @param[in] file_size size of file with text
- * @param[in, out] nLines number of the strings
- * @return Line* array with pointers to the strings and their length(needs to free)
- */
-Line* SplitLines(char* buffer, size_t file_size, size_t* nLines) {
-
-    my_assert(file_size != 0, NULL);
-    my_assert(buffer != NULL, NULL); 
 
 
-    Line* index = (Line*)calloc(file_size, sizeof(Line));
+void CodeDump(proccessor* v_m) {
     
-    size_t str_num = 1;
-    index[0].str = &buffer[0];
+    FILE* file = fopen(LOG_FILE, "a");
+    my_assert(file != NULL,);
 
-    
-    for (size_t i = 0; i < file_size; i++) { 
+    size_t empty_flag = 0;
+    size_t arg_flag = 0;
 
-        if (buffer[i] == '\n'  && i < file_size - 1) {
-            buffer[i] = '\0';
+    fprintf(file, "========= BYTE-CODE =========\n");
+    for (size_t i = 0; i < v_m->buffer_size, empty_flag < 2; i++) {
 
-            index[str_num - 1].len = (size_t)(&buffer[i] - index[str_num - 1].str);
-            index[str_num++].str = &buffer[i + 1];
-        }
+        fprintf(file, "[%llu] %lg", i, v_m->code[i]);
+
+        const char* name = CommandName((int)v_m->code[i], &arg_flag);
+        if (*name != '\0') 
+            fprintf(file, "   (%s)", name);
+
+        if (i == v_m->pc) 
+            fprintf(file, "      [<--------");
+        
+        fprintf(file, "\n");
+
+        if (v_m->code[i] == 0) empty_flag++;
     }
-    index[str_num - 1].len = (size_t)(&buffer[file_size] - index[str_num - 1].str);
 
-    *nLines = str_num;
-
-    return index;
+    fprintf(file, "\n");
+    fclose(file);
 }
+
+
+void clean_file(void) {
+    fclose(fopen(LOG_FILE, "w"));
+}
+
 
 /**
  * @brief reads file and puts text in the buffer
@@ -184,4 +189,68 @@ char* ReadFromFile(const char* name, size_t* out_size) {
     fclose(file);
 
     return buffer;
+}
+
+double* lf_buffer(const char* name, size_t* buffer_size) {
+    my_assert(name != NULL, NULL);
+    my_assert(buffer_size != NULL, NULL);
+
+    size_t outsize = 0;
+    char* buffer = ReadFromFile(name, &outsize);
+    my_assert(buffer != NULL, NULL);
+
+    double* code = (double*)calloc(outsize, sizeof(double));
+    my_assert(code != NULL, NULL);
+
+    const char* ptr = buffer;
+    int offset = 0;  //смещение
+    double val = 0;
+    size_t count = 0;
+
+    while (sscanf(ptr, "%lf%n", &val, &offset) == 1) {
+        code[count++] = val;
+        ptr += offset;
+    }
+
+    *buffer_size = count;
+
+    free(buffer);
+    return code;
+}
+
+const char* CommandName(int command, size_t* arg_flag) {
+
+    *arg_flag = 0;
+
+    switch(command) {
+
+        case HLT:
+            return "HLT";
+        case PUSH:
+            *arg_flag = 1;
+            return "PUSH";
+        case ADD:
+            return "ADD";
+        case SUB:
+            return "SUB";
+        case DIV:
+            return "DIV";
+        case OUT:
+            return "OUT";
+        case POP:
+            *arg_flag = 1;
+            return "POP";
+        case PUSHr:
+            *arg_flag = 1;
+            return "PUSHr";
+        case MUL:
+            return "MUL";
+        case JMP:
+            *arg_flag = 1;
+            return "JMP";
+        default:
+            return "";
+    }
+
+    return "";
 }

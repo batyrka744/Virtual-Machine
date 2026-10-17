@@ -1,3 +1,3 @@
 cls
-g++ stack_canary.cpp proc2.cpp -o processor
+g++ stack_canary.cpp proc3.cpp -o processor
 .\processor
