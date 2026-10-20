@@ -12,6 +12,7 @@
 #define NUM_REGIST 8
 #define MAX_LABELS 67
 
+
 #define BLACK "\x1b[30m"
 #define RED "\x1b[31m"
 #define GREEN "\x1b[32m"
@@ -22,10 +23,27 @@
 #define WHITE "\x1b[37m"
 #define RESET "\x1b[0m"
 
+
 #define my_assert(exp, ret) if(!(exp)) {\
     \
     printf(YELLOW "%s:%d: [Assertation failed: %s, file %s, line %d]\n" RESET, __FILE__, __LINE__, #exp,  __FILE__, __LINE__);\
     return ret;} 
+
+
+#define NO_ARGS(command) do {\
+    if (pass_num == 2) {\
+        fprintf(file_output, "%d ", (command));\
+    }\
+    (*ip) += 1;\
+} while (0)
+
+#define WITH_ARGS(command, arg) do {\
+    if (pass_num == 2) {\
+        fprintf(file_output, "%d %lf ", (command), (StackElem_t)(arg));\
+    }\
+    (*ip) += 2;\
+} while (0)
+
 
 //--------------------------------------------- CONSTS -------------------------------------------------
 
@@ -44,7 +62,17 @@ enum commands {
     POP = 6, 
     PUSHr = 7, 
     MUL = 8, 
-    JMP = 9};
+    JMP = 9, 
+    JA = 10,    // >
+    JAE = 11,   // >=
+    JB = 12,    // <
+    JBE = 13,   // <=  
+    JE = 14,    // ==
+    JNE = 15,    // !=
+    CALL = 16,
+    RET = 17,
+    IN = 18 
+};
 
 enum reg_nums {
     AX = 1,

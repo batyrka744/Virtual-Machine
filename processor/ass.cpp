@@ -48,21 +48,6 @@ int ParseLine(const char* line, int pass_num, LabelsCase* Case, FILE* file_outpu
     
     char label_name[COMMAND_LENGTH] = {0};
 
-    #define NO_ARGS(command) do {\
-        if (pass_num == 2) {\
-            fprintf(file_output, "%d ", (command));\
-        }\
-        (*ip) += 1;\
-    } while (0)
-
-    #define WITH_ARGS(command, arg) do {\
-        if (pass_num == 2) {\
-            fprintf(file_output, "%d %lg ", (command), (StackElem_t)(arg));\
-        }\
-        (*ip) += 2;\
-    } while (0)
-
-    
     sscanf(line, "%s", label_name);
     char* colon = strchr(label_name, ':');
 
@@ -71,14 +56,12 @@ int ParseLine(const char* line, int pass_num, LabelsCase* Case, FILE* file_outpu
             *colon = '\0';
             add_label(Case, label_name, *ip);
         }
-        
         return 0;
 
     } else {
         char command_name[COMMAND_LENGTH] = {0};
         char arg_str[COMMAND_LENGTH] = {0};
         
-
         int get_command = sscanf(line, "%s", command_name);
 
         if (get_command != 1) {
@@ -101,7 +84,7 @@ int ParseLine(const char* line, int pass_num, LabelsCase* Case, FILE* file_outpu
                         break;
                     } 
                 }
-                my_assert(check_valid > 0,);
+                my_assert(check_valid > 0, -1);
 
             } else
                 my_assert(0, -1);
@@ -130,7 +113,7 @@ int ParseLine(const char* line, int pass_num, LabelsCase* Case, FILE* file_outpu
 
         } else if (strcmp(command_name, "POP") == 0) {
 
-            my_assert(sscanf(line, "%s %s", command_name, arg_str), -1);
+            my_assert(sscanf(line, "%*s %s", arg_str), -1);
             int check_valid = 0;
 
             for (size_t j = 0; j < NUM_REGIST; j++) {
@@ -140,26 +123,112 @@ int ParseLine(const char* line, int pass_num, LabelsCase* Case, FILE* file_outpu
                     break;
                 } 
             }
-            my_assert(check_valid > 0,);
+            my_assert(check_valid > 0, -1);
 
 
+//------------------------------------------------------ JUMP FAMILY ---------------------------------------------------
         } else if (strcmp(command_name, "JMP") == 0) {
 
             my_assert(sscanf(line, "%*s %s", arg_str), -1);
 
             int address = 0;
             if (pass_num == 2) {
-                find_label(Case, arg_str);
+                address = find_label(Case, arg_str);
                 my_assert(address != -1, -1);
             }
             WITH_ARGS(JMP, address);
-            
+
+        } else if (strcmp(command_name, "JA") == 0) {
+
+            my_assert(sscanf(line, "%*s %s", arg_str), -1);
+
+            int address = 0;
+            if (pass_num == 2) {
+                address = find_label(Case, arg_str);
+                my_assert(address != -1, -1);
+            }
+            WITH_ARGS(JA, address);
+
+        } else if (strcmp(command_name, "JAE") == 0) {
+
+            my_assert(sscanf(line, "%*s %s", arg_str), -1);
+
+            int address = 0;
+            if (pass_num == 2) {
+                address = find_label(Case, arg_str);
+                my_assert(address != -1, -1);
+            }
+            WITH_ARGS(JAE, address);
+
+        } else if (strcmp(command_name, "JB") == 0) {
+
+            my_assert(sscanf(line, "%*s %s", arg_str), -1);
+
+            int address = 0;
+            if (pass_num == 2) {
+                address = find_label(Case, arg_str);
+                my_assert(address != -1, -1);
+            }
+            WITH_ARGS(JB, address);
+
+        } else if (strcmp(command_name, "JBE") == 0) {
+
+            my_assert(sscanf(line, "%*s %s", arg_str), -1);
+
+            int address = 0;
+            if (pass_num == 2) {
+                address = find_label(Case, arg_str);
+                my_assert(address != -1, -1);
+            }
+            WITH_ARGS(JMP, address);
+
+        } else if (strcmp(command_name, "JE") == 0) {
+
+            my_assert(sscanf(line, "%*s %s", arg_str), -1);
+
+            int address = 0;
+            if (pass_num == 2) {
+                address = find_label(Case, arg_str);
+                my_assert(address != -1, -1);
+            }
+            WITH_ARGS(JMP, address);
+
+        } else if (strcmp(command_name, "JNE") == 0) {
+
+            my_assert(sscanf(line, "%*s %s", arg_str), -1);
+
+            int address = 0;
+            if (pass_num == 2) {
+                address = find_label(Case, arg_str);
+                my_assert(address != -1, -1);
+            }
+            WITH_ARGS(JNE, address);
+        
+//-----------------------------------------------------------------------------------------------------------------------
+
+        } else if (strcmp(command_name, "CALL") == 0) {
+
+            my_assert(sscanf(line, "%*s %s", arg_str), -1);
+
+            int address = 0;
+            if (pass_num == 2) {
+                address = find_label(Case, arg_str);
+                my_assert(address != -1, -1);
+            }
+            WITH_ARGS(CALL, address);
+
+        } else if (strcmp(command_name, "RET") == 0) {
+            NO_ARGS(RET);
+        
+        } else if (strcmp(command_name, "IN") == 0) {
+            NO_ARGS(IN);
 
         } else {
             printf(RED "Assembler Error: wrong command's name\n" RESET);
             (*break_flag)++;
         }
     }
+    return 0;
 }
 
 

@@ -1,4 +1,3 @@
-#include "Stack_canary.h"
 #include "assem.h"
 #include <stdio.h>
 #include <string.h>

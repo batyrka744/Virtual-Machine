@@ -1,5 +1,6 @@
 PUSH 1
 POP AX
+dick:
 PUSH AX
 PUSH AX
 MUL
@@ -8,4 +9,4 @@ PUSH AX
 PUSH 1
 ADD
 POP AX
-JMP 4
+JMP dick

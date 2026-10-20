@@ -111,7 +111,61 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
         case JMP:
             v_m->pc = (int)v_m->code[v_m->pc + 1];
             break;
+
+        case JA:
+            b = StackPop(&v_m->stk, err);
+            a = StackPop(&v_m->stk, err);
+
+            if (b > a) 
+                v_m->pc = (int)v_m->code[v_m->pc + 1];
+
+            break;
+
+        case JAE:
+            b = StackPop(&v_m->stk, err);
+            a = StackPop(&v_m->stk, err);
+
+            if (b >= a) 
+                v_m->pc = (int)v_m->code[v_m->pc + 1];
             
+            break;
+
+        case JB:
+            b = StackPop(&v_m->stk, err);
+            a = StackPop(&v_m->stk, err);
+
+            if (a > b) 
+                v_m->pc = (int)v_m->code[v_m->pc + 1];
+            
+            break;
+
+        case JBE:
+            b = StackPop(&v_m->stk, err);
+            a = StackPop(&v_m->stk, err);
+
+            if (a >= b) 
+                v_m->pc = (int)v_m->code[v_m->pc + 1];
+            
+            break;
+
+        case JE:
+            b = StackPop(&v_m->stk, err);
+            a = StackPop(&v_m->stk, err);
+
+            if (b == a) 
+                v_m->pc = (int)v_m->code[v_m->pc + 1];
+            
+            break;
+
+        case JNE:
+            b = StackPop(&v_m->stk, err);
+            a = StackPop(&v_m->stk, err);
+
+            if (b != a) 
+                v_m->pc = (int)v_m->code[v_m->pc + 1];
+            
+            break;
+
         default:
             printf("switch-case err\n");
             v_m->pc += 1;
