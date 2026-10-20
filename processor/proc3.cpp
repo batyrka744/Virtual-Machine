@@ -22,7 +22,8 @@ int main() {
 void ReadFromBuffer(proccessor* v_m) {
     assert(v_m != NULL);
 
-    STACK_INIT(v_m->stk, 1);
+    STACK_INIT(v_m->stk, 10);
+    STACK_INIT(v_m->ret_stk, 10);
 
     int command = 0;
 
@@ -50,6 +51,7 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
     StackElem_t a = 0;
     StackElem_t b = 0;
     StackElem_t popped = 0;
+    StackElem_t x = 0;
 
     switch(command) {
 
@@ -118,6 +120,8 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
 
             if (b > a) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
+            else
+                v_m += 2;
 
             break;
 
@@ -127,6 +131,8 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
 
             if (b >= a) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
+            else
+                v_m += 2;
             
             break;
 
@@ -136,6 +142,8 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
 
             if (a > b) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
+            else
+                v_m += 2;
             
             break;
 
@@ -145,6 +153,8 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
 
             if (a >= b) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
+            else
+                v_m += 2;
             
             break;
 
@@ -154,6 +164,8 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
 
             if (b == a) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
+            else
+                v_m += 2;
             
             break;
 
@@ -163,7 +175,24 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
 
             if (b != a) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
+            else
+                v_m += 2;
             
+            break;
+
+        case CALL:
+            StackPush(&v_m->ret_stk, v_m->pc + 1);
+            v_m->pc = (int)v_m->code[v_m->pc + 1];
+            break;
+            
+        case RET:
+            v_m->pc = (int)StackPop(&v_m->ret_stk, err);
+            break;
+
+        case IN:
+            my_assert(scanf("%lg", &x),)
+            StackPush(&v_m->stk, x);
+            v_m->pc += 1;
             break;
 
         default:
@@ -284,28 +313,72 @@ const char* CommandName(int command, size_t* arg_flag) {
 
         case HLT:
             return "HLT";
+
         case PUSH:
             *arg_flag = 1;
             return "PUSH";
+
         case ADD:
             return "ADD";
+
         case SUB:
             return "SUB";
+
         case DIV:
             return "DIV";
+
         case OUT:
             return "OUT";
+
         case POP:
             *arg_flag = 1;
             return "POP";
+
         case PUSHr:
             *arg_flag = 1;
             return "PUSHr";
+
         case MUL:
             return "MUL";
+
         case JMP:
             *arg_flag = 1;
             return "JMP";
+
+        case JA:
+            *arg_flag = 1;
+            return "JA";
+
+        case JAE:
+            *arg_flag = 1;
+            return "JAE";
+
+        case JB:
+            *arg_flag = 1;
+            return "JB";
+
+        case JBE:
+            *arg_flag = 1;
+            return "JBE";
+
+        case JE:
+            *arg_flag = 1;
+            return "JNE";
+
+        case JNE:
+            *arg_flag = 1;
+            return "JNE";
+
+        case CALL:
+            *arg_flag = 1;
+            return "CALL";
+
+        case RET:
+            return "RET";
+
+        case IN:
+            return "IN";
+
         default:
             return "";
     }

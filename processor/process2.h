@@ -30,6 +30,7 @@ typedef double ass_t;
 struct proccessor
 {
     stack_t stk;
+    stack_t ret_stk;
     double* code;
     size_t buffer_size;
     int pc; 
