@@ -1,242 +1,219 @@
-#include "assem.h"
-
-//massiv structur enum colvo args blyat pizda mne
+#include "../assem.h"
 
 int main() {
-    FILE* file_write = fopen(after_ass, "w");
-    my_assert(file_write != NULL, 0);
+    project ass_main = {0};
+    AsmState state = {0};
 
-    size_t out_size = 0; 
-    size_t nLines = 0;
+    start_work(&ass_main, &state);
 
-    char* buffer = ReadFromFile(before_ass, &out_size);   //struct и free
-    Line* index = SplitLines(buffer, out_size, &nLines);
-
-    Assembler(file_write, index, buffer, nLines);
     
-    fclose(file_write);      //free zdes
+    
+    Assembler(ass_main, &state);
+
+    if (state.need_second_pass == 1) {
+        state.pass = 2;
+        Assembler(ass_main, &state);
+    }
+
+    fwrite(state.bytecode, sizeof(StackElem_t), state.ip, ass_main.file_write);
+    
+       
+    finish_work(&state, &ass_main);
+
     return 0;
 }
 
-void Assembler(FILE* file_output, Line* index, char* buffer, size_t nLines) {
-    my_assert(file_output != NULL,);
-
-
-    LabelsCase Case = {0};     //два раза вызвать ассемблер вместо for
-
-
-    size_t break_flag = 0;
-    size_t ip = 0;
-
-    for (size_t j = 1; j < 3; j++) {
-        ip = 0;
-        for (size_t i = 0; i < nLines && break_flag == 0; i++) {
-            ParseLine(index[i].str, j, &Case, file_output, &ip, &break_flag);
-        }
-        break_flag = 0;
-    }
+void Assembler(project ass_main, AsmState* state) {
+    my_assert(ass_main.file_write != NULL,);
+    my_assert(ass_main.buffer != NULL,);
+    my_assert(ass_main.index != NULL,);
     
-
-    free(index);
-    free(buffer);
+    state->ip = 0;
+        
+    for (size_t i = 0; i < ass_main.nLines; i++) {
+        int res = ParseLine(ass_main.index[i].str, state);
+        my_assert(res == 0,);
+    }
+        
 }
 
 
-int ParseLine(const char* line, int pass_num, LabelsCase* Case, FILE* file_output, size_t* ip, size_t* break_flag) {
-    size_t len = strlen(line); //pass_num?
-    //return error
-    char label_name[COMMAND_LENGTH] = {0};
+int ParseLine(const char* line, AsmState* state) {
+    my_assert(line != NULL, -1);
+    my_assert(state != NULL, -1);
 
-    sscanf(line, "%s", label_name);
-    char* colon = strchr(label_name, ':');//line
-    my_assert(!isalpha(*(colon + 1)) || !isdigit(*(colon + 1)), -1);  
+    int offset = 0;
+    char first_word[COMMAND_LENGTH] = {0};
+    int readed = sscanf(line, "%s%n", first_word, &offset);
 
+    if (first_word[0] == ';') {
+        return 0;
+    }
+    if (readed != 1) {
+        return 0;
+    }
+    size_t len = strlen(line);
+
+    sscanf(line, "%s", first_word);
+    char* colon = strchr(first_word, ':');
+    
     if (colon != NULL) {
-        if (pass_num == 1) {
+        if (state->pass == 1) {
             *colon = '\0';
-            add_label(Case, label_name, *ip);
+            add_label(&state->Case, first_word, state->ip);
         }
         return 0;
+    }
 
+    CommandInfo* cmd = FindCommand(first_word);
+    my_assert(cmd != NULL, -1);
+
+    if (cmd->arg == ARG_NO) {
+        int pidaras = ParseNoArg(cmd, line + offset, state);
+        return pidaras;
+    } else {
+        int pidaras = ParseWithArg(cmd, line + offset, state);
+        return pidaras;
+    }
+
+    return -1;
+}
+
+int ParseNoArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state) {
+    my_assert(cmd != NULL, -1);
+    my_assert(state != NULL, -1);
+    my_assert(end_of_line != NULL, -1);
+
+    if (CheckRubbish(end_of_line) != 0) {
+        printf(RED "Wrong ass-code: command %s expects no arguments, got '%s'\n" RESET, cmd->name, end_of_line);
+        return -1;
     } 
 
-    char command_name[COMMAND_LENGTH] = {0};
-    char arg_str[COMMAND_LENGTH] = {0};
 
-    int get_command = sscanf(line, "%s", command_name);  
-//PISI COMENTARII
-    if (get_command != 1) { 
-        return 0;
-    }
+    state->bytecode[state->ip++] = (StackElem_t)cmd->opcode;
 
-    if (strcmp(command_name, "PUSH") == 0) {    //func for 2 and func for 1 arg
-
-        StackElem_t value = 0;
-        if (sscanf(line, "%*s %lg", &value) == 1)   //comment and ubrat else
-            WITH_ARGS(PUSH, value);
-
-        else if (sscanf(line, "%*s %s", arg_str) == 1) {
-            int check_valid = 0;
-
-            for (size_t j = 0; j < NUM_REGIST; j++) {
-                if (strcmp(arg_str, registers[j].name) == 0) {  
-                    WITH_ARGS(PUSHr, registers[j].num);
-                    check_valid++;
-                    break;
-                } 
-            }
-            my_assert(check_valid > 0, -1);       //if name of register is wrong
-
-        } else
-            my_assert(0, -1);
-
-
-    } else if (strcmp(command_name, "ADD") == 0) {   //считать все и написать один раз fwrite   не придется в maine otkrivat
-        NO_ARGS(ADD);    
-
-    } else if (strcmp(command_name, "SUB") == 0) {
-        NO_ARGS(SUB);
-
-    } else if (strcmp(command_name, "MUL") == 0) {
-        NO_ARGS(MUL);
-
-    } else if (strcmp(command_name, "DIV") == 0) {
-        NO_ARGS(DIV);
-
-    } else if (strcmp(command_name, "OUT") == 0) {
-        NO_ARGS(OUT);
-
-    } else if (strcmp(command_name, "HLT") == 0) {
-        NO_ARGS(HLT); 
-        if (pass_num == 2)
-            (*break_flag)++;
-        
-
-    } else if (strcmp(command_name, "POP") == 0) {
-
-        my_assert(sscanf(line, "%*s %s", arg_str), -1);
-        int check_valid = 0;
-
-        for (size_t j = 0; j < NUM_REGIST; j++) {
-            if (strcmp(arg_str, registers[j].name) == 0) {
-                WITH_ARGS(POP, registers[j].num);
-                check_valid++;
-                break;
-            } 
-        }
-        my_assert(check_valid > 0, -1);
-
-
-//------------------------------------------------------ JUMP FAMILY ---------------------------------------------------
-    } else if (strcmp(command_name, "JMP") == 0) {
-
-        my_assert(sscanf(line, "%*s %s", arg_str), -1);
-
-        int address = 0;
-        if (pass_num == 2) {
-            address = find_label(Case, arg_str);
-            my_assert(address != -1, -1);
-        }
-        WITH_ARGS(JMP, address);
-
-    } else if (strcmp(command_name, "JA") == 0) {
-
-        my_assert(sscanf(line, "%*s %s", arg_str), -1);
-
-        int address = 0;
-        if (pass_num == 2) {
-            address = find_label(Case, arg_str);
-            my_assert(address != -1, -1);
-        }
-        WITH_ARGS(JA, address);
-
-    } else if (strcmp(command_name, "JAE") == 0) {
-
-        my_assert(sscanf(line, "%*s %s", arg_str), -1);
-
-        int address = 0;
-        if (pass_num == 2) {
-            address = find_label(Case, arg_str);
-            my_assert(address != -1, -1);
-        }
-        WITH_ARGS(JAE, address);
-
-    } else if (strcmp(command_name, "JB") == 0) {
-
-        my_assert(sscanf(line, "%*s %s", arg_str), -1);
-
-        int address = 0;
-        if (pass_num == 2) {
-            address = find_label(Case, arg_str);
-            my_assert(address != -1, -1);
-        }
-        WITH_ARGS(JB, address);
-
-    } else if (strcmp(command_name, "JBE") == 0) {
-
-        my_assert(sscanf(line, "%*s %s", arg_str), -1);
-
-        int address = 0;
-        if (pass_num == 2) {
-            address = find_label(Case, arg_str);
-            my_assert(address != -1, -1);
-        }
-        WITH_ARGS(JMP, address);
-
-    } else if (strcmp(command_name, "JE") == 0) {
-
-        my_assert(sscanf(line, "%*s %s", arg_str), -1);
-
-        int address = 0;
-        if (pass_num == 2) {
-            address = find_label(Case, arg_str);
-            my_assert(address != -1, -1);
-        }
-        WITH_ARGS(JMP, address);
-
-    } else if (strcmp(command_name, "JNE") == 0) {
-
-        my_assert(sscanf(line, "%*s %s", arg_str), -1);
-
-        int address = 0;
-        if (pass_num == 2) {
-            address = find_label(Case, arg_str);
-            my_assert(address != -1, -1);
-        }
-        WITH_ARGS(JNE, address);
-    
-//-----------------------------------------------------------------------------------------------------------------------
-
-    } else if (strcmp(command_name, "CALL") == 0) {
-
-        my_assert(sscanf(line, "%*s %s", arg_str), -1);
-
-        int address = 0;
-        if (pass_num == 2) {
-            address = find_label(Case, arg_str);
-            my_assert(address != -1, -1);
-        }
-        WITH_ARGS(CALL, address);
-
-    } else if (strcmp(command_name, "RET") == 0) {
-        NO_ARGS(RET);
-    
-    } else if (strcmp(command_name, "") == 0) {
-        NO_ARGS(IN);
-
-    } else {
-        printf(RED "Assembler Error: wrong command's name\n" RESET);
-        (*break_flag)++;
-    }
-    
     return 0;
 }
 
+int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state) {
+    my_assert(cmd != NULL, -1);
+    my_assert(state != NULL, -1);
+    my_assert(end_of_line != NULL, -1);
 
+    if (cmd->arg == LABEL) {
+        char label_name[COMMAND_LENGTH] = {0};
+        int offset = 0;
 
+        if (sscanf(end_of_line, "%s%n", label_name, &offset) != 1) {
+            printf(RED "Syntax error: rubbish after label '%s'\n" RESET, label_name);
+            return -1;
+        } 
+        if (CheckRubbish(end_of_line + offset) != 0) {
+            printf(RED "Syntax Error: rubbish after label '%s'\n" RESET, label_name);
+            return -1;
+        }
+        int target_address = find_label(&state->Case, label_name);
 
+        if (target_address == -1) {    //метка ещё не найдена
+            state->need_second_pass = 1;
+            target_address = 0;
+        }
+        state->bytecode[state->ip] = (StackElem_t)cmd->opcode;
+        state->bytecode[state->ip + 1] = (StackElem_t)target_address;
+        state->ip += 2;
 
+        return 0;
+    }
 
+    if (cmd->arg == REG) {
+        char reg_name[COMMAND_LENGTH] = {0};
+        int offset = 0;
+
+        if (sscanf(end_of_line, "%s%n", reg_name, &offset) != 1) {
+            printf(RED "Syntax error: rubbish after register '%s'\n" RESET, reg_name);
+            return -1;
+        }
+        if (CheckRubbish(end_of_line + offset) != 0) {
+            printf(RED "Syntax Error: rubbish after register '%s'\n" RESET, reg_name);
+            return -1;
+        }
+
+        int reg_num = FindRegister((const char*)reg_name);
+        if (reg_num == NOT_FOUNDED) {
+            printf(RED "Invalid name of register" RESET);
+        }
+        state->bytecode[state->ip] = (StackElem_t)cmd->opcode;
+        state->bytecode[state->ip + 1] = (StackElem_t)reg_num;
+        state->ip += 2;
+
+        return 0;
+    }
+
+    if (cmd->arg == ARG_VALUE) {
+
+        StackElem_t num_val = 0;
+        int offset = 0;
+        if (sscanf(end_of_line, "%lg%n", &num_val, &offset) == 1) {
+            if(CheckRubbish(end_of_line + offset) != 0) {
+                printf(RED "Syntax error: rubbish after number '%lg'\n" RESET, num_val);
+                return -1;
+            }
+            state->bytecode[state->ip] = (StackElem_t)cmd->opcode;
+            state->bytecode[state->ip + 1] = (StackElem_t)num_val;
+            state->ip += 2;
+
+            return 0;
+        }
+
+        char reg_name[COMMAND_LENGTH] = {0};
+        if (sscanf(end_of_line, "%s%n", reg_name, &offset) == 1) {
+            if(CheckRubbish(end_of_line + offset) != 0) {
+                printf(RED "Syntax error: rubbish after register '%s'\n" RESET, reg_name);
+                return -1;
+            }
+
+            int reg_num = FindRegister((const char*)reg_name);
+            if (reg_num == NOT_FOUNDED) {
+                printf(RED "Invalid name of register" RESET);
+            }
+            state->bytecode[state->ip] = (StackElem_t)PUSHr;
+            state->bytecode[state->ip + 1] = (StackElem_t)reg_num;
+            state->ip += 2;
+
+            return 0;
+            
+        } 
+    }   
+    return -1;
+}
+
+int CheckRubbish(const char* str) {
+    if (str == NULL) {
+        return 0;
+    }
+
+    for (size_t i = 0; str[i] != '\0'; i++) {
+        if (str[i] == ';')
+            return 0;
+        
+        if(!isspace((char)str[i])) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static int FindRegister(const char* reg_name) {
+    if (reg_name == NULL)
+        return NOT_FOUNDED;
+
+    for (size_t i = 0; i < NUM_REGIST; i++) {
+        if (strcmp(reg_name, registers[i].name) == 0) {
+            return registers[i].num;
+        }
+    }
+    return NOT_FOUNDED;
+}
 
 
 
@@ -332,4 +309,36 @@ int find_label(const LabelsCase* Case, const char* name) {
         }
     }
     return -1;
+}
+
+CommandInfo* FindCommand(const char* name) {
+    my_assert(name != 0, NULL);
+    size_t size_arr = sizeof(all_commands) / sizeof(CommandInfo);
+
+    for (size_t i = 0; i < size_arr; i++) {
+        if (strcmp(all_commands[i].name, name) == 0) {
+            return all_commands + i;
+        }
+    }
+    return NULL;
+}
+
+void finish_work(AsmState* state, project* ass_main) {
+    fclose(ass_main->file_write); 
+
+    free(state->bytecode);
+    free(ass_main->index);
+    free(ass_main->buffer); 
+}
+
+void start_work(project* ass_main, AsmState* state) {
+    my_assert(ass_main != NULL,);
+    ass_main->file_write = fopen(after_ass, "w");
+    my_assert(ass_main->file_write != NULL,);
+
+    ass_main->buffer = ReadFromFile(before_ass, &ass_main->out_size);   
+    ass_main->index = SplitLines(ass_main->buffer, ass_main->out_size, &ass_main->nLines);
+
+    state->pass = 1;
+    state->bytecode = (StackElem_t*)calloc(ass_main->nLines, sizeof(StackElem_t));
 }

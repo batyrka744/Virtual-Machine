@@ -1,25 +1,18 @@
 IN
-POP ,
-CALL FACTORIAL // 
-            OUT
-            HLT
-                FACT:ORIAL
-
-            FACTORIAL:
-
-                PUSH 1
-                PUSH AX
-
-                JA ANUS
-
-                PUSH AX
-                RET
-
-
-            ANUS:
-            PUSH AX
-            PUSH 1
-            SUB
-            POP AX
-            CALL FACTORIAL
-            MUL
+POP AX
+CALL FACTORIAL
+OUT
+HLT
+FACTORIAL:
+PUSH 1
+PUSH AX
+JA ANUS
+PUSH AX
+RET
+ANUS:
+PUSH AX
+PUSH 1
+SUB
+POP AX
+CALL FACTORIAL
+MUL

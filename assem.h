@@ -11,6 +11,7 @@
 #define COMMAND_LENGTH 64
 #define NUM_REGIST 8
 #define MAX_LABELS 67
+#define NOT_FOUNDED -1
 
 
 #define BLACK "\x1b[30m"
@@ -31,17 +32,18 @@
 
 
 #define NO_ARGS(command) do {\
-    if (pass_num == 2) {\
-        fprintf(file_output, "%d ", (command));\
+    if (state->pass == 2) {\
+        state->bytecode[state->ip] = command\
     }\
-    (*ip) += 1;\
+    (state->ip) += 1;\
 } while (0)
 
 #define WITH_ARGS(command, arg) do {\
-    if (pass_num == 2) {\
-        fprintf(file_output, "%d %lf ", (command), (StackElem_t)(arg));\
+    if (state->pass == 2) {\
+        state->bytecode[state->ip] = command\
+        state->bytecode[state->ip + 1] = arg\
     }\
-    (*ip) += 2;\
+    (state->ip) += 2;\
 } while (0)
 
 
@@ -86,7 +88,7 @@ enum reg_nums {
 //------------------------------------------------ LABELS -----------------------------------------------------------
 
 struct Label {
-    char name[32];
+    char name[COMMAND_LENGTH];
     int address;
 };
 
@@ -100,6 +102,58 @@ struct LabelsCase {   //в общую структуру
 
 struct Line {char* str; size_t len;};
 
+struct project {
+    FILE* file_write;
+    size_t out_size, nLines;
+    char* buffer;
+    Line* index;
+};
+
+enum ArgType {
+    ARG_NO = 0,
+    REG = 1,
+    ARG_VALUE = 2,
+    LABEL = 3,
+};
+
+struct CommandInfo {
+    const char* name;
+    commands opcode;
+    ArgType arg;
+};
+
+static CommandInfo all_commands[] = {
+    {.name = "HLT",  .opcode = HLT,  .arg = ARG_NO}, 
+    {.name = "PUSH", .opcode = PUSH, .arg = ARG_VALUE},
+    {.name = "ADD",  .opcode = ADD,  .arg = ARG_NO},
+    {.name = "SUB",  .opcode = SUB,  .arg = ARG_NO},
+    {.name = "DIV",  .opcode = DIV,  .arg = ARG_NO},
+    {.name = "OUT",  .opcode = OUT,  .arg = ARG_NO},
+    {.name = "POP",  .opcode = POP,  .arg = REG},
+    {.name = "MUL",  .opcode = MUL,  .arg = ARG_NO},
+    {.name = "JMP",  .opcode = JMP,  .arg = LABEL},
+    {.name = "JA",   .opcode = JA,   .arg = LABEL},
+    {.name = "JAE",  .opcode = JAE,  .arg = LABEL},
+    {.name = "JB",   .opcode = JB,   .arg = LABEL},
+    {.name = "JBE",  .opcode = JBE,  .arg = LABEL},
+    {.name = "JE",   .opcode = JE,   .arg = LABEL},
+    {.name = "JNE",  .opcode = JNE,  .arg = LABEL},
+    {.name = "CALL", .opcode = CALL, .arg = LABEL},
+    {.name = "RET",  .opcode = RET,  .arg = ARG_NO},  
+    {.name = "IN",   .opcode = IN,   .arg = ARG_NO},
+};
+
+//-------------------------------------------------- ASS -----------------------------------------------------------
+
+struct AsmState {
+
+    StackElem_t* bytecode;
+    size_t ip;
+    size_t capacity;
+    int pass;
+    LabelsCase Case;
+    int need_second_pass;
+};
 
 //------------------------------------------------- REGISTERS ------------------------------------------------------
 
@@ -109,7 +163,7 @@ struct Registr {
     size_t len;
 };
 
-Registr registers[NUM_REGIST] = {
+static Registr registers[NUM_REGIST] = {
     {.name = "AX", .num = AX, .len = 2}, 
     {.name = "BX", .num = BX, .len = 2},
     {.name = "CX", .num = CX, .len = 2},
@@ -122,10 +176,24 @@ char* ReadFromFile(const char* name, size_t* out_size);
 
 Line* SplitLines(char* buffer, size_t file_size, size_t* nLines);
 
-void Assembler(FILE* file_output, Line* index, char* buffer, size_t nLines);
+void Assembler(project ass_main, AsmState* state);
 
 void add_label(LabelsCase* Case, const char* name, size_t address);
 
 int find_label(const LabelsCase* Case, const char* name);
 
-int ParseLine(const char* line, int pass_num, LabelsCase* Case, FILE* file_output, size_t* ip, size_t* break_flag);
+int ParseLine(const char* line, AsmState* state);
+
+int ParseNoArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state);
+
+int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state);
+
+int CheckRubbish(const char* str);
+
+static int FindRegister(const char* reg_name);
+
+CommandInfo* FindCommand(const char* name);
+
+void start_work(project* ass_main, AsmState* state);
+
+void finish_work(AsmState* state, project* ass_main);
