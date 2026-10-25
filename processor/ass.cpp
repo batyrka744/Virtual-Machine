@@ -6,15 +6,14 @@ int main() {
 
     start_work(&ass_main, &state);
 
-    
-    
-    Assembler(ass_main, &state);
+
+    Assembler(&ass_main, &state);
 
     if (state.need_second_pass == 1) {
         state.pass = 2;
-        Assembler(ass_main, &state);
+        Assembler(&ass_main, &state);
     }
-
+    
     fwrite(state.bytecode, sizeof(StackElem_t), state.ip, ass_main.file_write);
     
        
@@ -23,15 +22,17 @@ int main() {
     return 0;
 }
 
-void Assembler(project ass_main, AsmState* state) {
-    my_assert(ass_main.file_write != NULL,);
-    my_assert(ass_main.buffer != NULL,);
-    my_assert(ass_main.index != NULL,);
+void Assembler(project* ass_main, AsmState* state) {
+    my_assert(state != NULL,);
+    my_assert(ass_main != NULL,)
+    my_assert(ass_main->file_write != NULL,);
+    my_assert(ass_main->buffer != NULL,);
+    my_assert(ass_main->index != NULL,);
     
     state->ip = 0;
         
-    for (size_t i = 0; i < ass_main.nLines; i++) {
-        int res = ParseLine(ass_main.index[i].str, state);
+    for (size_t i = 0; i < ass_main->nLines; i++) {
+        int res = ParseLine(ass_main->index[i].str, state);
         my_assert(res == 0,);
     }
         
@@ -324,6 +325,10 @@ CommandInfo* FindCommand(const char* name) {
 }
 
 void finish_work(AsmState* state, project* ass_main) {
+    my_assert(state != NULL,);
+    my_assert(ass_main != NULL,);
+    my_assert(ass_main->file_write != NULL,);
+
     fclose(ass_main->file_write); 
 
     free(state->bytecode);
@@ -333,12 +338,12 @@ void finish_work(AsmState* state, project* ass_main) {
 
 void start_work(project* ass_main, AsmState* state) {
     my_assert(ass_main != NULL,);
-    ass_main->file_write = fopen(after_ass, "w");
+    ass_main->file_write = fopen(after_ass, "wb");
     my_assert(ass_main->file_write != NULL,);
 
     ass_main->buffer = ReadFromFile(before_ass, &ass_main->out_size);   
     ass_main->index = SplitLines(ass_main->buffer, ass_main->out_size, &ass_main->nLines);
 
     state->pass = 1;
-    state->bytecode = (StackElem_t*)calloc(ass_main->nLines, sizeof(StackElem_t));
+    state->bytecode = (StackElem_t*)calloc(ass_main->nLines*2, sizeof(StackElem_t));
 }

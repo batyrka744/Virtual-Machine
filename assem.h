@@ -30,23 +30,6 @@
     printf(YELLOW "%s:%d: [Assertation failed: %s, file %s, line %d]\n" RESET, __FILE__, __LINE__, #exp,  __FILE__, __LINE__);\
     return ret;} 
 
-
-#define NO_ARGS(command) do {\
-    if (state->pass == 2) {\
-        state->bytecode[state->ip] = command\
-    }\
-    (state->ip) += 1;\
-} while (0)
-
-#define WITH_ARGS(command, arg) do {\
-    if (state->pass == 2) {\
-        state->bytecode[state->ip] = command\
-        state->bytecode[state->ip + 1] = arg\
-    }\
-    (state->ip) += 2;\
-} while (0)
-
-
 //--------------------------------------------- CONSTS -------------------------------------------------
 
 const char* before_ass = "input1.txt";
@@ -65,10 +48,10 @@ enum commands {
     PUSHr = 7, 
     MUL = 8, 
     JMP = 9, 
-    JA = 10,    // >
-    JAE = 11,   // >=
-    JB = 12,    // <
-    JBE = 13,   // <=  
+    JA = 10,    // <
+    JAE = 11,   // <=
+    JB = 12,    // >
+    JBE = 13,   // >=  
     JE = 14,    // ==
     JNE = 15,    // !=
     CALL = 16,
@@ -176,7 +159,7 @@ char* ReadFromFile(const char* name, size_t* out_size);
 
 Line* SplitLines(char* buffer, size_t file_size, size_t* nLines);
 
-void Assembler(project ass_main, AsmState* state);
+void Assembler(project* ass_main, AsmState* state);
 
 void add_label(LabelsCase* Case, const char* name, size_t address);
 

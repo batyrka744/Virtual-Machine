@@ -19,6 +19,8 @@ int main() {
 void ReadFromBuffer(proccessor* v_m) {
     my_assert(v_m != NULL,);  
 
+    //printf("bufsize: %zu, first code: %lg\n", v_m->buffer_size, v_m->code[0]);
+
     STACK_INIT(v_m->stk, STACK_CAPACITY);   
     STACK_INIT(v_m->ret_stk, RECURSION_DEEPTH);    
 
@@ -53,7 +55,7 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
     switch(command) {
 
         case HLT:
-            StackDestroy(&v_m->stk); 
+            //StackDestroy(&v_m->stk); 
             (*break_flag)++;
             v_m->pc += 1;
             break;
@@ -119,7 +121,7 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
             if (b > a) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
             else
-                v_m += 2;
+                v_m->pc += 2;
 
             break;
 
@@ -130,7 +132,7 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
             if (b >= a) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
             else
-                v_m += 2;
+                v_m->pc += 2;
             
             break;
 
@@ -141,7 +143,7 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
             if (a > b) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
             else
-                v_m += 2;
+                v_m->pc += 2;
             
             break;
 
@@ -152,7 +154,7 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
             if (a >= b) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
             else
-                v_m += 2;
+                v_m->pc += 2;
             
             break;
 
@@ -163,7 +165,7 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
             if (b == a) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
             else
-                v_m += 2;
+                v_m->pc += 2;
             
             break;
 
@@ -174,7 +176,7 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
             if (b != a) 
                 v_m->pc = (int)v_m->code[v_m->pc + 1];
             else
-                v_m += 2;
+                v_m->pc += 2;
             
             break;
 
@@ -187,11 +189,12 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
             v_m->pc = (int)StackPop(&v_m->ret_stk, err);
             break;
 
-        case IN:{
+        case IN: {
             StackElem_t x = 0;
 
             printf(MAGENTA "Enter a value\n" RESET);
-            my_assert(scanf("%lg", &x),)
+            fflush(stdout);
+            my_assert(scanf("%lg", &x) == 1,)
 
             StackPush(&v_m->stk, x);
             v_m->pc += 1;
@@ -290,7 +293,9 @@ double* lf_buffer(const char* name, size_t* buffer_size) {
     char* buffer = ReadFromFile(name, &outsize);
     my_assert(buffer != NULL, NULL);
 
-    double* code = (double*)calloc(outsize, sizeof(double));
+    *buffer_size = outsize / sizeof(StackElem_t);
+
+    /*double* code = (double*)calloc(outsize, sizeof(double));
     my_assert(code != NULL, NULL);
 
     const char* ptr = buffer;
@@ -305,8 +310,8 @@ double* lf_buffer(const char* name, size_t* buffer_size) {
 
     *buffer_size = count;
 
-    free(buffer);
-    return code;
+    free(buffer);*/
+    return (StackElem_t*)buffer;
 }
 
 const char* CommandName(int command, size_t* arg_flag) {
