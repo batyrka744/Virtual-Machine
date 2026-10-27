@@ -16,6 +16,11 @@ int main() {
     return 0;
 }
 
+/**
+ * @brief reads elements from buffer and parses them
+ * 
+ * @param[in, out] v_m pointer on structure with processor's characteristics
+ */
 void ReadFromBuffer(proccessor* v_m) {
     my_assert(v_m != NULL,);  
 
@@ -43,7 +48,14 @@ void ReadFromBuffer(proccessor* v_m) {
     }
 }
     
-
+/**
+ * @brief completes commands
+ * 
+ * @param[in, out] v_m pointer to structure with characteristic of processor
+ * @param[in] command number of command
+ * @param[out] break_flag 1 if it needs to stop reading else 0
+ * @param[out] err ERR_OK if all is OK else error
+ */
 void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
 
     StackElem_t a = 0;
@@ -208,7 +220,11 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
 
 
 
-
+/**
+ * @brief prints into the file buffer's dump
+ * 
+ * @param[in, out] v_m pointer to structure with characteristic of processor 
+ */
 void CodeDump(proccessor* v_m) {
     my_assert(v_m != NULL,);
     
@@ -243,7 +259,10 @@ void CodeDump(proccessor* v_m) {
     fclose(file);
 }
 
-
+/**
+ * @brief cleans txt file
+ * 
+ */
 void clean_file(void) {
     fclose(fopen(LOG_FILE, "w"));
 }
@@ -282,7 +301,14 @@ char* ReadFromFile(const char* name, size_t* out_size) {
     return buffer;
 }
 
-double* lf_buffer(const char* name, size_t* buffer_size) {
+/**
+ * @brief returns buffer with
+ * 
+ * @param[in] name name of file with byte-code
+ * @param[out] buffer_size size of buffer with code
+ * @return StackElem_t* pointer to buffer
+ */
+StackElem_t* lf_buffer(const char* name, size_t* buffer_size) {
     my_assert(name != NULL, NULL);
     my_assert(buffer_size != NULL, NULL);
 
@@ -295,6 +321,13 @@ double* lf_buffer(const char* name, size_t* buffer_size) {
     return (StackElem_t*)buffer;
 }
 
+/**
+ * @brief returns string with name of file 
+ * 
+ * @param[in] command command's opcode
+ * @param[out] arg_flag returns 1 if command has argument else 0
+ * @return const char* name of command
+ */
 const char* CommandName(int command, size_t* arg_flag) {
 
     *arg_flag = 0;
@@ -376,6 +409,11 @@ const char* CommandName(int command, size_t* arg_flag) {
     return "";
 }
 
+/**
+ * @brief cleans memory and finishes work
+ * 
+ * @param[in, out] intel structure with processor's characteristic
+ */
 void DestroyIntel(proccessor* intel) {
 
     StackDestroy(&intel->stk);

@@ -22,6 +22,12 @@ int main() {
     return 0;
 }
 
+/**
+ * @brief performs one pass of the assembler
+ * 
+ * @param[in, out] ass_main structure with data of project
+ * @param[in, out] state structure with assembler's haracteristic
+ */
 void Assembler(project* ass_main, AsmState* state) {
     my_assert(state != NULL,);
     my_assert(ass_main != NULL,)
@@ -35,10 +41,15 @@ void Assembler(project* ass_main, AsmState* state) {
         int res = ParseLine(ass_main->index[i].str, state);
         my_assert(res == 0,);
     }
-        
 }
 
-
+/**
+ * @brief parses one string
+ * 
+ * @param[in] line string that need to parse
+ * @param[in, out] state structure with assembler's haracteristic
+ * @return int 0 if ok else -1
+ */
 int ParseLine(const char* line, AsmState* state) {
     my_assert(line != NULL, -1);
     my_assert(state != NULL, -1);
@@ -80,6 +91,14 @@ int ParseLine(const char* line, AsmState* state) {
     return -1;
 }
 
+/**
+ * @brief parses line with no args
+ * 
+ * @param[in, out] cmd 
+ * @param[in] end_of_line pointer to the last readed character
+ * @param[in, out] state structure with assembler's haracteristic
+ * @return int 0 if ok else -1
+ */
 int ParseNoArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state) {
     my_assert(cmd != NULL, -1);
     my_assert(state != NULL, -1);
@@ -96,6 +115,14 @@ int ParseNoArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state)
     return 0;
 }
 
+/**
+ * @brief parses line with arg
+ * 
+ * @param[in, out] cmd 
+ * @param[in] end_of_line pointer to the last readed character
+ * @param[in, out] state structure with assembler's haracteristic
+ * @return int 0 if ok else -1
+ */
 int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state) {
     my_assert(cmd != NULL, -1);
     my_assert(state != NULL, -1);
@@ -188,6 +215,12 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
     return -1;
 }
 
+/**
+ * @brief checks if there is rubbish after command
+ * 
+ * @param[in] str 
+ * @return int 0 if okcelse -1
+ */
 int CheckRubbish(const char* str) {
     if (str == NULL) {
         return 0;
@@ -204,6 +237,12 @@ int CheckRubbish(const char* str) {
     return 0;
 }
 
+/**
+ * @brief finds register in array and returns its num
+ * 
+ * @param[in] reg_name name of register
+ * @return int register's num
+ */
 static int FindRegister(const char* reg_name) {
     if (reg_name == NULL)
         return NOT_FOUNDED;
@@ -215,8 +254,6 @@ static int FindRegister(const char* reg_name) {
     }
     return NOT_FOUNDED;
 }
-
-
 
 
 
@@ -290,6 +327,13 @@ char* ReadFromFile(const char* name, size_t* out_size) {
     return buffer;
 }
 
+/**
+ * @brief adds label to table of labels
+ * 
+ * @param[in, out] Case structure with label's table and current number of labels
+ * @param[in] name name of founded label
+ * @param[in] address label's
+ */
 void add_label(LabelsCase* Case, const char* name, size_t address) {
     my_assert(name != NULL,);
     my_assert(Case->count < MAX_LABELS,);
@@ -300,6 +344,14 @@ void add_label(LabelsCase* Case, const char* name, size_t address) {
     (Case->count)++;
 }
 
+/**
+ * @brief adds label to table of labels
+ * 
+ * @param[in, out] Case structure with label's table and current number of labels
+ * @param[in] name name of label that need to find
+ * @param[in] address label's address
+ * @return int label's address if founded else -1
+ */
 int find_label(const LabelsCase* Case, const char* name) {
     my_assert(Case != NULL, -1);
     my_assert(name != NULL, 0);
@@ -309,9 +361,15 @@ int find_label(const LabelsCase* Case, const char* name) {
             return Case->labels[i].address;
         }
     }
-    return -1;
+    return NOT_FOUNDED;
 }
 
+/**
+ * @brief find command by its name
+ * 
+ * @param[in] name name of command 
+ * @return CommandInfo* pointer on structure with command's characteristic
+ */
 CommandInfo* FindCommand(const char* name) {
     my_assert(name != 0, NULL);
     size_t size_arr = sizeof(all_commands) / sizeof(CommandInfo);
@@ -324,6 +382,12 @@ CommandInfo* FindCommand(const char* name) {
     return NULL;
 }
 
+/**
+ * @brief finishes work
+ * 
+ * @param[in, out] state pointer on structure with assembler's characteristic
+ * @param[in, out] ass_main pointer on structure with project data
+ */
 void finish_work(AsmState* state, project* ass_main) {
     my_assert(state != NULL,);
     my_assert(ass_main != NULL,);
@@ -336,6 +400,12 @@ void finish_work(AsmState* state, project* ass_main) {
     free(ass_main->buffer); 
 }
 
+/**
+ * @brief starts work with processor
+ * 
+ * @param[in, out] ass_main pointer on structure with project data
+ * @param[in, out] state pointer on structure with assembler's characteristic
+ */
 void start_work(project* ass_main, AsmState* state) {
     my_assert(ass_main != NULL,);
     ass_main->file_write = fopen(after_ass, "wb");
