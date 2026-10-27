@@ -2,9 +2,9 @@
 
 int main() {
     project ass_main = {0};
-    AsmState state = {0};
+    AsmState state = {0};        //bytecode, ip, capacity, pass, labels, need second pass     
 
-    start_work(&ass_main, &state);
+    start_work(&ass_main, &state);  //initialization of structs
 
 
     Assembler(&ass_main, &state);
@@ -33,7 +33,6 @@ void Assembler(project* ass_main, AsmState* state) {
     my_assert(ass_main != NULL,)
     my_assert(ass_main->file_write != NULL,);
     my_assert(ass_main->buffer != NULL,);
-    my_assert(ass_main->index != NULL,);
     
     state->ip = 0;
         
@@ -54,20 +53,19 @@ int ParseLine(const char* line, AsmState* state) {
     my_assert(line != NULL, -1);
     my_assert(state != NULL, -1);
 
-    int offset = 0;
+    int offset = 0;    //num of readed chars
     char first_word[COMMAND_LENGTH] = {0};
-    int readed = sscanf(line, "%s%n", first_word, &offset);
+    int readed = sscanf(line, "%s%n", first_word, &offset);   //num of readed elems
 
     if (first_word[0] == ';') {
         return 0;
     }
-    if (readed != 1) {
+    if (readed != 1) {     //если не считалось
         return 0;
     }
     size_t len = strlen(line);
 
-    sscanf(line, "%s", first_word);
-    char* colon = strchr(first_word, ':');
+    char* colon = strchr(first_word, ':');      //pointer to char with ';'
     
     if (colon != NULL) {
         if (state->pass == 1) {
@@ -77,12 +75,13 @@ int ParseLine(const char* line, AsmState* state) {
         return 0;
     }
 
-    CommandInfo* cmd = FindCommand(first_word);
+    CommandInfo* cmd = FindCommand(first_word);    //name, opcode, arg
     my_assert(cmd != NULL, -1);
 
     if (cmd->arg == ARG_NO) {
         int pidaras = ParseNoArg(cmd, line + offset, state);
         return pidaras;
+
     } else {
         int pidaras = ParseWithArg(cmd, line + offset, state);
         return pidaras;
@@ -94,7 +93,7 @@ int ParseLine(const char* line, AsmState* state) {
 /**
  * @brief parses line with no args
  * 
- * @param[in, out] cmd 
+ * @param[in, out] cmd pointer on structure with info about command
  * @param[in] end_of_line pointer to the last readed character
  * @param[in, out] state structure with assembler's haracteristic
  * @return int 0 if ok else -1
@@ -110,7 +109,7 @@ int ParseNoArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state)
     } 
 
 
-    state->bytecode[state->ip++] = (StackElem_t)cmd->opcode;
+    state->bytecode[state->ip++] = (StackElem_t)cmd->opcode;   //записываем код команды в буфер
 
     return 0;
 }
@@ -118,7 +117,7 @@ int ParseNoArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state)
 /**
  * @brief parses line with arg
  * 
- * @param[in, out] cmd 
+ * @param[in, out] cmd pointer on structure with info about command
  * @param[in] end_of_line pointer to the last readed character
  * @param[in, out] state structure with assembler's haracteristic
  * @return int 0 if ok else -1
@@ -140,7 +139,7 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
             printf(RED "Syntax Error: rubbish after label '%s'\n" RESET, label_name);
             return -1;
         }
-        int target_address = find_label(&state->Case, label_name);
+        int target_address = find_label(&state->Case, label_name);   //ищем адрес в таблице меток
 
         if (target_address == -1) {    //метка ещё не найдена
             state->need_second_pass = 1;
@@ -177,7 +176,7 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
         return 0;
     }
 
-    if (cmd->arg == ARG_VALUE) {
+    if (cmd->arg == ARG_VALUE) {     //если либо регистр либо число(PUSH)
 
         StackElem_t num_val = 0;
         int offset = 0;
@@ -200,7 +199,7 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
                 return -1;
             }
 
-            int reg_num = FindRegister((const char*)reg_name);
+            int reg_num = FindRegister((const char*)reg_name);   //находим номер регистра в массиве
             if (reg_num == NOT_FOUNDED) {
                 printf(RED "Invalid name of register" RESET);
             }
@@ -226,7 +225,7 @@ int CheckRubbish(const char* str) {
         return 0;
     }
 
-    for (size_t i = 0; str[i] != '\0'; i++) {
+    for (size_t i = 0; str[i] != '\0'; i++) {   //комментарий
         if (str[i] == ';')
             return 0;
         
@@ -266,7 +265,7 @@ static int FindRegister(const char* reg_name) {
  * @param[in, out] nLines number of the strings
  * @return Line* array with pointers to the strings and their length(needs to free)
  */
-Line* SplitLines(char* buffer, size_t file_size, size_t* nLines) {
+Line* SplitLines(char* buffer, size_t file_size, size_t* nLines) {      //mb uberu
 
     my_assert(file_size != 0, NULL);
     my_assert(buffer != NULL, NULL); 

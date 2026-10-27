@@ -12,7 +12,7 @@
 
 #define COMMAND_LENGTH 64
 
-#define MAX_LABELS 67
+#define MAX_LABELS 69-2
 #define NOT_FOUNDED -1
 
 
@@ -39,9 +39,9 @@ struct Label {
     int address;
 };
 
-struct LabelsCase {   //в общую структуру
+struct LabelsCase {   
     Label labels[MAX_LABELS];
-    size_t count;
+    size_t count;               //current num of elements in tthe table
 };
 
 //-------------------------------------------------- FOR READ --------------------------------------------------------------
