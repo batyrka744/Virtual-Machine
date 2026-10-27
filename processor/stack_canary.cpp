@@ -1,6 +1,6 @@
 //#define STACK_DEBUG 
 
-#include "Stack_canary.h"
+#include "../Stack_canary.h"
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>

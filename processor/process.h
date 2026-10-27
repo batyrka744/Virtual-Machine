@@ -1,22 +1,18 @@
-#include "../assem.h"
+#include "../hnik.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define COMMAND_LENGTH 64
 #define LOG_FILE "log.txt"
 #define STACK_CAPACITY 10
 #define RECURSION_DEEPTH 10
 
-#define BLACK "\x1b[30m"
-#define RED "\x1b[31m"
-#define GREEN "\x1b[32m"
-#define YELLOW "\x1b[33m"
-#define BLUE "\x1b[34m"
-#define MAGENTA "\x1b[35m"
-#define CYAN "\x1b[36m"
-#define WHITE "\x1b[37m"
-#define RESET "\x1b[0m"
+const char* before_ass = "../assembler/input1.txt";
+const char* after_ass = "input2.txt";
+
 
 #define STACK_DEBUG
 
@@ -26,8 +22,6 @@
     printf(YELLOW "%s:%d: [Assertation failed: %s, file %s, line %d]\n" RESET, __FILE__, __LINE__, #exp,  __FILE__, __LINE__);\
     return ret;} 
 
-
-typedef double ass_t;
 
 struct proccessor
 {

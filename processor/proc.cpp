@@ -19,8 +19,6 @@ int main() {
 void ReadFromBuffer(proccessor* v_m) {
     my_assert(v_m != NULL,);  
 
-    //printf("bufsize: %zu, first code: %lg\n", v_m->buffer_size, v_m->code[0]);
-
     STACK_INIT(v_m->stk, STACK_CAPACITY);   
     STACK_INIT(v_m->ret_stk, RECURSION_DEEPTH);    
 
@@ -55,7 +53,6 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
     switch(command) {
 
         case HLT:
-            //StackDestroy(&v_m->stk); 
             (*break_flag)++;
             v_m->pc += 1;
             break;
@@ -295,22 +292,6 @@ double* lf_buffer(const char* name, size_t* buffer_size) {
 
     *buffer_size = outsize / sizeof(StackElem_t);
 
-    /*double* code = (double*)calloc(outsize, sizeof(double));
-    my_assert(code != NULL, NULL);
-
-    const char* ptr = buffer;
-    int offset = 0;  //смещение
-    double val = 0;
-    size_t count = 0;
-
-    while (sscanf(ptr, "%lf%n", &val, &offset) == 1) {
-        code[count++] = val;
-        ptr += offset;
-    }
-
-    *buffer_size = count;
-
-    free(buffer);*/
     return (StackElem_t*)buffer;
 }
 
