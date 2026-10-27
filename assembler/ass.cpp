@@ -1,71 +1,223 @@
 #include "assem.h"
 
-enum commands {HLT = 0, PUSH = 1, ADD = 2, SUB = 3, DIV = 4, OUT = 5, POP = 6, PUSHr = 7, MUL = 8, JMP = 9};
+int main() {
+    project ass_main = {0};
+    AsmState state = {0};
 
-int Assembler(const char* name, FILE* file_output) {
-    assert(name != NULL);
-    assert(file_output != NULL);
+    start_work(&ass_main, &state);
 
-    size_t out_size = 0; 
-    size_t nLines = 0;
 
-    char* buffer = ReadFromFile(name, &out_size);
-    Line* index = SplitLines(buffer, out_size, &nLines);
+    Assembler(&ass_main, &state);
 
-    char s[COMMAND_LENGTH] = {};
-    int value = 0;
-
-    for (size_t i = 0; i < nLines; i++) {
-        int get_command = sscanf(index[i].str, "%63s %d", s, &value);
-
-        if (get_command == EOF) {
-            continue; // пустая строка между командами
-        }
-
-        if (get_command == 2) {
-            my_assert(strcmp(s, "PUSH") == 0, -1);
-            fprintf(file_output, "%d %d\n", 1, value); 
-            
-        } else if (get_command == 1) {
-
-            if (strcmp(s, "POP") == 0) {
-                fprintf(file_output, "%d\n", POP);
-
-            } else if (strcmp(s, "ADD") == 0) {
-                fprintf(file_output, "%d\n", ADD);
-
-            } else if (strcmp(s, "SUB") == 0) {
-                fprintf(file_output, "%d\n", SUB);
-
-            } else if (strcmp(s, "MUL") == 0) {
-                fprintf(file_output, "%d\n", MUL);
-
-            } else if (strcmp(s, "DIV") == 0) {
-                fprintf(file_output, "%d\n", DIV);
-
-            } else if (strcmp(s, "OUT") == 0) {
-                fprintf(file_output, "%d\n", OUT);
-
-            } else if (strcmp(s, "HLT") == 0) {
-                fprintf(file_output, "%d\n", HLT); 
-                break;
-
-            } else {
-                printf(RED "Disassembler Error: wrong command's name\n" RESET);
-                break;
-            }
-
-        } else {
-            printf(RED "Assembler Error: wrong number of words\n" RESET);
-            break;
-        }
+    if (state.need_second_pass == 1) {
+        state.pass = 2;
+        Assembler(&ass_main, &state);
     }
-
-    free(index);
-    free(buffer);
+    
+    fwrite(state.bytecode, sizeof(StackElem_t), state.ip, ass_main.file_write);
+    
+       
+    finish_work(&state, &ass_main);
 
     return 0;
 }
+
+void Assembler(project* ass_main, AsmState* state) {
+    my_assert(state != NULL,);
+    my_assert(ass_main != NULL,)
+    my_assert(ass_main->file_write != NULL,);
+    my_assert(ass_main->buffer != NULL,);
+    my_assert(ass_main->index != NULL,);
+    
+    state->ip = 0;
+        
+    for (size_t i = 0; i < ass_main->nLines; i++) {
+        int res = ParseLine(ass_main->index[i].str, state);
+        my_assert(res == 0,);
+    }
+        
+}
+
+
+int ParseLine(const char* line, AsmState* state) {
+    my_assert(line != NULL, -1);
+    my_assert(state != NULL, -1);
+
+    int offset = 0;
+    char first_word[COMMAND_LENGTH] = {0};
+    int readed = sscanf(line, "%s%n", first_word, &offset);
+
+    if (first_word[0] == ';') {
+        return 0;
+    }
+    if (readed != 1) {
+        return 0;
+    }
+    size_t len = strlen(line);
+
+    sscanf(line, "%s", first_word);
+    char* colon = strchr(first_word, ':');
+    
+    if (colon != NULL) {
+        if (state->pass == 1) {
+            *colon = '\0';
+            add_label(&state->Case, first_word, state->ip);
+        }
+        return 0;
+    }
+
+    CommandInfo* cmd = FindCommand(first_word);
+    my_assert(cmd != NULL, -1);
+
+    if (cmd->arg == ARG_NO) {
+        int pidaras = ParseNoArg(cmd, line + offset, state);
+        return pidaras;
+    } else {
+        int pidaras = ParseWithArg(cmd, line + offset, state);
+        return pidaras;
+    }
+
+    return -1;
+}
+
+int ParseNoArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state) {
+    my_assert(cmd != NULL, -1);
+    my_assert(state != NULL, -1);
+    my_assert(end_of_line != NULL, -1);
+
+    if (CheckRubbish(end_of_line) != 0) {
+        printf(RED "Wrong ass-code: command %s expects no arguments, got '%s'\n" RESET, cmd->name, end_of_line);
+        return -1;
+    } 
+
+
+    state->bytecode[state->ip++] = (StackElem_t)cmd->opcode;
+
+    return 0;
+}
+
+int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state) {
+    my_assert(cmd != NULL, -1);
+    my_assert(state != NULL, -1);
+    my_assert(end_of_line != NULL, -1);
+
+    if (cmd->arg == LABEL) {
+        char label_name[COMMAND_LENGTH] = {0};
+        int offset = 0;
+
+        if (sscanf(end_of_line, "%s%n", label_name, &offset) != 1) {
+            printf(RED "Syntax error: rubbish after label '%s'\n" RESET, label_name);
+            return -1;
+        } 
+        if (CheckRubbish(end_of_line + offset) != 0) {
+            printf(RED "Syntax Error: rubbish after label '%s'\n" RESET, label_name);
+            return -1;
+        }
+        int target_address = find_label(&state->Case, label_name);
+
+        if (target_address == -1) {    //метка ещё не найдена
+            state->need_second_pass = 1;
+            target_address = 0;
+        }
+        state->bytecode[state->ip] = (StackElem_t)cmd->opcode;
+        state->bytecode[state->ip + 1] = (StackElem_t)target_address;
+        state->ip += 2;
+
+        return 0;
+    }
+
+    if (cmd->arg == REG) {
+        char reg_name[COMMAND_LENGTH] = {0};
+        int offset = 0;
+
+        if (sscanf(end_of_line, "%s%n", reg_name, &offset) != 1) {
+            printf(RED "Syntax error: rubbish after register '%s'\n" RESET, reg_name);
+            return -1;
+        }
+        if (CheckRubbish(end_of_line + offset) != 0) {
+            printf(RED "Syntax Error: rubbish after register '%s'\n" RESET, reg_name);
+            return -1;
+        }
+
+        int reg_num = FindRegister((const char*)reg_name);
+        if (reg_num == NOT_FOUNDED) {
+            printf(RED "Invalid name of register" RESET);
+        }
+        state->bytecode[state->ip] = (StackElem_t)cmd->opcode;
+        state->bytecode[state->ip + 1] = (StackElem_t)reg_num;
+        state->ip += 2;
+
+        return 0;
+    }
+
+    if (cmd->arg == ARG_VALUE) {
+
+        StackElem_t num_val = 0;
+        int offset = 0;
+        if (sscanf(end_of_line, "%lg%n", &num_val, &offset) == 1) {
+            if(CheckRubbish(end_of_line + offset) != 0) {
+                printf(RED "Syntax error: rubbish after number '%lg'\n" RESET, num_val);
+                return -1;
+            }
+            state->bytecode[state->ip] = (StackElem_t)cmd->opcode;
+            state->bytecode[state->ip + 1] = (StackElem_t)num_val;
+            state->ip += 2;
+
+            return 0;
+        }
+
+        char reg_name[COMMAND_LENGTH] = {0};
+        if (sscanf(end_of_line, "%s%n", reg_name, &offset) == 1) {
+            if(CheckRubbish(end_of_line + offset) != 0) {
+                printf(RED "Syntax error: rubbish after register '%s'\n" RESET, reg_name);
+                return -1;
+            }
+
+            int reg_num = FindRegister((const char*)reg_name);
+            if (reg_num == NOT_FOUNDED) {
+                printf(RED "Invalid name of register" RESET);
+            }
+            state->bytecode[state->ip] = (StackElem_t)PUSHr;
+            state->bytecode[state->ip + 1] = (StackElem_t)reg_num;
+            state->ip += 2;
+
+            return 0;
+            
+        } 
+    }   
+    return -1;
+}
+
+int CheckRubbish(const char* str) {
+    if (str == NULL) {
+        return 0;
+    }
+
+    for (size_t i = 0; str[i] != '\0'; i++) {
+        if (str[i] == ';')
+            return 0;
+        
+        if(!isspace((char)str[i])) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static int FindRegister(const char* reg_name) {
+    if (reg_name == NULL)
+        return NOT_FOUNDED;
+
+    for (size_t i = 0; i < NUM_REGIST; i++) {
+        if (strcmp(reg_name, registers[i].name) == 0) {
+            return registers[i].num;
+        }
+    }
+    return NOT_FOUNDED;
+}
+
+
+
 
 
 
@@ -83,7 +235,7 @@ Line* SplitLines(char* buffer, size_t file_size, size_t* nLines) {
     my_assert(buffer != NULL, NULL); 
 
 
-    Line* index = (Line*)calloc(file_size, sizeof(Line));
+    Line* index = (Line*)calloc(file_size, sizeof(Line));//ass
     
     size_t str_num = 1;
     index[0].str = &buffer[0];
@@ -136,4 +288,62 @@ char* ReadFromFile(const char* name, size_t* out_size) {
     fclose(file);
 
     return buffer;
+}
+
+void add_label(LabelsCase* Case, const char* name, size_t address) {
+    my_assert(name != NULL,);
+    my_assert(Case->count < MAX_LABELS,);
+
+    Case->labels[Case->count].address = address;
+    strcpy(Case->labels[Case->count].name, name);
+
+    (Case->count)++;
+}
+
+int find_label(const LabelsCase* Case, const char* name) {
+    my_assert(Case != NULL, -1);
+    my_assert(name != NULL, 0);
+
+    for (size_t i = 0; i < Case->count; i++) {
+        if (strcmp(name, Case->labels[i].name) == 0) {
+            return Case->labels[i].address;
+        }
+    }
+    return -1;
+}
+
+CommandInfo* FindCommand(const char* name) {
+    my_assert(name != 0, NULL);
+    size_t size_arr = sizeof(all_commands) / sizeof(CommandInfo);
+
+    for (size_t i = 0; i < size_arr; i++) {
+        if (strcmp(all_commands[i].name, name) == 0) {
+            return all_commands + i;
+        }
+    }
+    return NULL;
+}
+
+void finish_work(AsmState* state, project* ass_main) {
+    my_assert(state != NULL,);
+    my_assert(ass_main != NULL,);
+    my_assert(ass_main->file_write != NULL,);
+
+    fclose(ass_main->file_write); 
+
+    free(state->bytecode);
+    free(ass_main->index);
+    free(ass_main->buffer); 
+}
+
+void start_work(project* ass_main, AsmState* state) {
+    my_assert(ass_main != NULL,);
+    ass_main->file_write = fopen(after_ass, "wb");
+    my_assert(ass_main->file_write != NULL,);
+
+    ass_main->buffer = ReadFromFile(before_ass, &ass_main->out_size);   
+    ass_main->index = SplitLines(ass_main->buffer, ass_main->out_size, &ass_main->nLines);
+
+    state->pass = 1;
+    state->bytecode = (StackElem_t*)calloc(ass_main->nLines*2, sizeof(StackElem_t));
 }

@@ -1,3 +1,5 @@
+#include "../hnik.h"
+
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
@@ -5,7 +7,14 @@
 #include <ctype.h>
 #include <sys/stat.h>
 
+
+//--------------------------------------------- MACROSES -------------------------------------------
+
 #define COMMAND_LENGTH 64
+
+#define MAX_LABELS 67
+#define NOT_FOUNDED -1
+
 
 #define BLACK "\x1b[30m"
 #define RED "\x1b[31m"
@@ -17,16 +26,108 @@
 #define WHITE "\x1b[37m"
 #define RESET "\x1b[0m"
 
+//--------------------------------------------- CONSTS -------------------------------------------------
 
-#define my_assert(exp, ret) if(!(exp)) {\
-    \
-    printf(YELLOW "%s:%d: [Assertation failed: %s, file %s, line %d]\n" RESET, __FILE__, __LINE__, #exp,  __FILE__, __LINE__);\
-    return ret;} 
+const char* before_ass = "input1.txt";
+const char* after_ass = "../processor/input2.txt";
 
-struct Line {char* str; size_t len;};
 
-enum commands {HLT = 0, PUSH = 1, ADD = 2, SUB = 3, DIV = 4, OUT = 5, POP = 6, PUSHr = 7, MUL = 8, JMP = 9};
+//------------------------------------------------ LABELS -----------------------------------------------------------
+
+struct Label {
+    char name[COMMAND_LENGTH];
+    int address;
+};
+
+struct LabelsCase {   //в общую структуру
+    Label labels[MAX_LABELS];
+    size_t count;
+};
+
+//-------------------------------------------------- FOR READ --------------------------------------------------------------
+
+
+
+
+struct project {
+    FILE* file_write;
+    size_t out_size, nLines;
+    char* buffer;
+    Line* index;
+};
+
+enum ArgType {
+    ARG_NO = 0,
+    REG = 1,
+    ARG_VALUE = 2,
+    LABEL = 3,
+};
+
+struct CommandInfo {
+    const char* name;
+    commands opcode;
+    ArgType arg;
+};
+
+static CommandInfo all_commands[] = {
+    {.name = "HLT",  .opcode = HLT,  .arg = ARG_NO}, 
+    {.name = "PUSH", .opcode = PUSH, .arg = ARG_VALUE},
+    {.name = "ADD",  .opcode = ADD,  .arg = ARG_NO},
+    {.name = "SUB",  .opcode = SUB,  .arg = ARG_NO},
+    {.name = "DIV",  .opcode = DIV,  .arg = ARG_NO},
+    {.name = "OUT",  .opcode = OUT,  .arg = ARG_NO},
+    {.name = "POP",  .opcode = POP,  .arg = REG},
+    {.name = "MUL",  .opcode = MUL,  .arg = ARG_NO},
+    {.name = "JMP",  .opcode = JMP,  .arg = LABEL},
+    {.name = "JA",   .opcode = JA,   .arg = LABEL},
+    {.name = "JAE",  .opcode = JAE,  .arg = LABEL},
+    {.name = "JB",   .opcode = JB,   .arg = LABEL},
+    {.name = "JBE",  .opcode = JBE,  .arg = LABEL},
+    {.name = "JE",   .opcode = JE,   .arg = LABEL},
+    {.name = "JNE",  .opcode = JNE,  .arg = LABEL},
+    {.name = "CALL", .opcode = CALL, .arg = LABEL},
+    {.name = "RET",  .opcode = RET,  .arg = ARG_NO},  
+    {.name = "IN",   .opcode = IN,   .arg = ARG_NO},
+};
+
+//-------------------------------------------------- ASS -----------------------------------------------------------
+
+struct AsmState {
+
+    StackElem_t* bytecode;
+    size_t ip;
+    size_t capacity;
+    int pass;
+    LabelsCase Case;
+    int need_second_pass;
+};
+
+
+
+//---------------------------------------------- FUNCTIONS DECLARATION --------------------------------------------
 
 char* ReadFromFile(const char* name, size_t* out_size);
+
 Line* SplitLines(char* buffer, size_t file_size, size_t* nLines);
-int Assembler(const char* name, FILE* file_output);
+
+void Assembler(project* ass_main, AsmState* state);
+
+void add_label(LabelsCase* Case, const char* name, size_t address);
+
+int find_label(const LabelsCase* Case, const char* name);
+
+int ParseLine(const char* line, AsmState* state);
+
+int ParseNoArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state);
+
+int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state);
+
+int CheckRubbish(const char* str);
+
+static int FindRegister(const char* reg_name);
+
+CommandInfo* FindCommand(const char* name);
+
+void start_work(project* ass_main, AsmState* state);
+
+void finish_work(AsmState* state, project* ass_main);
