@@ -36,7 +36,6 @@ struct proccessor
 };
 
 
-Line* SplitLines(char* buffer, size_t file_size, size_t* nLines);
 
 char* ReadFromFile(const char* name, size_t* out_size);
 
@@ -49,8 +48,6 @@ void CodeDump(proccessor* v_m);
 void clean_file(void);
 
 const char* CommandName(int command, size_t* arg_flag);
-
-//void Assembler(FILE* file_output, Line* index, char* buffer, size_t nLines);
 
 void execution(proccessor* v_m, int command, size_t* break_flag, errors* err);
 
