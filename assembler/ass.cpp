@@ -1,11 +1,20 @@
 #include "assem.h"
 
-int main() {
+
+int main(int argc, char* argv[]) {
+    my_assert(argv != NULL, -1);
+
     project ass_main = {0};
-    AsmState state = {0};        //bytecode, ip, capacity, pass, labels, need second pass     
-
-    start_work(&ass_main, &state);  //initialization of structs
-
+    AsmState state = {0};        //bytecode, ip, capacity, pass, labels, need second pass  
+    
+    if (argc == 1)
+        start_work(&ass_main, &state, before_ass);  //initialization of structs
+    else {
+        char beginning[FILE_NAME_LENGTH] = "Tests/";
+        printf(RED "PENNIS %s\n" RESET, strcat(beginning, (const char*)argv[1]));
+        start_work(&ass_main, &state, beginning);  //initialization of structs
+    }
+        
 
     Assembler(&ass_main, &state);
 
@@ -14,9 +23,12 @@ int main() {
         Assembler(&ass_main, &state);
     }
     
-    fwrite(state.bytecode, sizeof(StackElem_t), state.ip, ass_main.file_write);
-    
-       
+    fwrite(state.bytecode, sizeof(StackElem_t), state.ip, ass_main.file_write); 
+    // for (size_t i = 0; i < state.ip; i++) {
+    //     fprintf(ass_main.file_write, "%lg ", state.bytecode[i]);
+    // }
+    fprintf(ass_main.file_write, "\n");
+
     finish_work(&state, &ass_main);
 
     return 0;
@@ -79,7 +91,7 @@ int ParseLine(const char* line, AsmState* state) {
     my_assert(cmd != NULL, -1);
 
     if (cmd->arg == ARG_NO) {
-        int pidaras = ParseNoArg(cmd, line + offset, state);
+        int pidaras = ParseNoArg(cmd, line + offset, state);   //is_pidaras
         return pidaras;
 
     } else {
@@ -265,7 +277,7 @@ static int FindRegister(const char* reg_name) {
  * @param[in, out] nLines number of the strings
  * @return Line* array with pointers to the strings and their length(needs to free)
  */
-Line* SplitLines(char* buffer, size_t file_size, size_t* nLines) {      //mb uberu
+Line* SplitLines(char* buffer, size_t file_size, size_t* nLines) {
 
     my_assert(file_size != 0, NULL);
     my_assert(buffer != NULL, NULL); 
@@ -306,6 +318,7 @@ char* ReadFromFile(const char* name, size_t* out_size) {
     my_assert(name != NULL, NULL);
 
     FILE* file = fopen(name, "rb");
+    printf(BLUE "%s67\n" RESET, name);
     my_assert(file != NULL, NULL);
 
     struct stat file_info = {0};
@@ -395,8 +408,11 @@ void finish_work(AsmState* state, project* ass_main) {
     fclose(ass_main->file_write); 
 
     free(state->bytecode);
+
     free(ass_main->index);
-    free(ass_main->buffer); 
+
+    free(ass_main->buffer);
+
 }
 
 /**
@@ -404,15 +420,19 @@ void finish_work(AsmState* state, project* ass_main) {
  * 
  * @param[in, out] ass_main pointer on structure with project data
  * @param[in, out] state pointer on structure with assembler's characteristic
+ * @param[in] before_assem name of file with assembler's code
  */
-void start_work(project* ass_main, AsmState* state) {
+void start_work(project* ass_main, AsmState* state, const char* before_assem) {
     my_assert(ass_main != NULL,);
+
     ass_main->file_write = fopen(after_ass, "wb");
     my_assert(ass_main->file_write != NULL,);
 
-    ass_main->buffer = ReadFromFile(before_ass, &ass_main->out_size);   
+    ass_main->buffer = ReadFromFile(before_assem, &ass_main->out_size);   
+
     ass_main->index = SplitLines(ass_main->buffer, ass_main->out_size, &ass_main->nLines);
 
-    state->pass = 1;
+
+    state->pass = 1; //
     state->bytecode = (StackElem_t*)calloc(ass_main->nLines*2, sizeof(StackElem_t));
 }

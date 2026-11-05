@@ -1,0 +1,90 @@
+;Ввод коэффициентов квадратного уравнения
+IN
+POP AX
+IN
+POP BX
+IN
+POP CX
+
+CALL DISCRIMINANT
+POP DX
+
+PUSH DX
+PUSH 0
+JA ZERO_ROOTS
+
+PUSH DX
+PUSH 0
+JE ONE_ROOT
+
+JMP TWO_ROOTS
+;Конец Мэйна
+
+
+
+TWO_ROOTS:
+    PUSH BX
+    PUSH -1
+    MUL
+
+    PUSH DX
+    SQRT
+
+    SUB
+
+    PUSH 2
+    PUSH AX
+    MUL
+
+    DIV
+    OUT
+
+    PUSH BX
+    PUSH -1
+    MUL
+
+    PUSH DX
+    SQRT
+
+    ADD
+
+    PUSH 2
+    PUSH AX
+    MUL
+
+    DIV
+    OUT
+
+    HLT
+
+
+ONE_ROOT:
+    PUSH BX
+    PUSH -1
+    MUL
+    PUSH 2
+    PUSH AX
+    MUL
+    DIV
+    OUT
+    HLT
+
+ZERO_ROOTS:
+    PUSH -1488
+    OUT
+    HLT
+
+
+DISCRIMINANT:
+    PUSH BX
+    PUSH BX
+    MUL
+
+    PUSH 4
+    PUSH AX
+    PUSH CX
+    MUL
+    MUL
+
+    SUB
+    RET

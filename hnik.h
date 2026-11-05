@@ -1,4 +1,5 @@
 #include "Stack_canary.h"
+#include <string.h>
 
 #define BLACK "\x1b[30m"
 #define RED "\x1b[31m"
@@ -13,9 +14,7 @@
 #define my_assert(exp, ret) if(!(exp)) {\
     \
     printf(YELLOW "%s:%d: [Assertation failed: %s, file %s, line %d]\n" RESET, __FILE__, __LINE__, #exp,  __FILE__, __LINE__);\
-    return ret;} 
-
-#define NUM_REGIST 8
+    return ret;}     //fprintf
 
 
 //---------------------------------------------- ENUMS ---------------------------------------------------
@@ -30,6 +29,8 @@ enum commands {
     POP = 6, 
     PUSHr = 7, 
     MUL = 8, 
+
+
     JMP = 9, 
     JA = 10,    // <
     JAE = 11,   // <=
@@ -37,12 +38,17 @@ enum commands {
     JBE = 13,   // >=  
     JE = 14,    // ==
     JNE = 15,    // !=
+
     CALL = 16,
     RET = 17,
-    IN = 18 
+
+    IN = 18,
+    SQRT = 19
 };
 
 //------------------------------------------------- REGISTERS ------------------------------------------------------
+#define NUM_REGIST 8
+
 enum reg_nums {
     AX = 1,
     BX = 2,
@@ -57,10 +63,10 @@ struct Registr {
 };
 
 static Registr registers[NUM_REGIST] = {
-    {.name = "AX", .num = AX, .len = 2}, 
-    {.name = "BX", .num = BX, .len = 2},
-    {.name = "CX", .num = CX, .len = 2},
-    {.name = "DX", .num = DX, .len = 2},
+    {"AX", AX, strlen("AX")}, 
+    {"BX", BX, strlen("BX")},
+    {"CX", CX, strlen("CX")},
+    {"DX", DX, strlen("DX")},
 };
 
 struct Line {char* str; size_t len;};

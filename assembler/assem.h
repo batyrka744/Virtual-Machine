@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <assert.h>
-#include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <sys/stat.h>
@@ -28,8 +27,9 @@
 
 //--------------------------------------------- CONSTS -------------------------------------------------
 
-const char* before_ass = "input1.txt";
+const char* before_ass = "Tests/factorial.txt";
 const char* after_ass = "../processor/input2.txt";
+#define FILE_NAME_LENGTH 50
 
 
 //------------------------------------------------ LABELS -----------------------------------------------------------
@@ -50,6 +50,7 @@ struct LabelsCase {
 
 
 struct project {
+
     FILE* file_write;
     size_t out_size, nLines;
     char* buffer;
@@ -70,24 +71,29 @@ struct CommandInfo {
 };
 
 static CommandInfo all_commands[] = {
-    {.name = "HLT",  .opcode = HLT,  .arg = ARG_NO}, 
-    {.name = "PUSH", .opcode = PUSH, .arg = ARG_VALUE},
-    {.name = "ADD",  .opcode = ADD,  .arg = ARG_NO},
-    {.name = "SUB",  .opcode = SUB,  .arg = ARG_NO},
-    {.name = "DIV",  .opcode = DIV,  .arg = ARG_NO},
-    {.name = "OUT",  .opcode = OUT,  .arg = ARG_NO},
-    {.name = "POP",  .opcode = POP,  .arg = REG},
-    {.name = "MUL",  .opcode = MUL,  .arg = ARG_NO},
-    {.name = "JMP",  .opcode = JMP,  .arg = LABEL},
-    {.name = "JA",   .opcode = JA,   .arg = LABEL},
-    {.name = "JAE",  .opcode = JAE,  .arg = LABEL},
-    {.name = "JB",   .opcode = JB,   .arg = LABEL},
-    {.name = "JBE",  .opcode = JBE,  .arg = LABEL},
-    {.name = "JE",   .opcode = JE,   .arg = LABEL},
-    {.name = "JNE",  .opcode = JNE,  .arg = LABEL},
-    {.name = "CALL", .opcode = CALL, .arg = LABEL},
-    {.name = "RET",  .opcode = RET,  .arg = ARG_NO},  
-    {.name = "IN",   .opcode = IN,   .arg = ARG_NO},
+    {"HLT",  HLT,  ARG_NO}, 
+    {"PUSH", PUSH, ARG_VALUE},
+    {"ADD",  ADD,  ARG_NO},
+
+    {"SUB",  SUB,  ARG_NO},
+    {"DIV",  DIV,  ARG_NO},
+    {"OUT",  OUT,  ARG_NO},
+    {"POP",  POP,  REG},
+    {"MUL",  MUL,  ARG_NO},
+    {"SQRT", SQRT, ARG_NO},
+
+    {"JMP",  JMP,  LABEL},
+    {"JA",   JA,   LABEL},
+    {"JAE",  JAE,  LABEL},
+    {"JB",   JB,   LABEL},
+    {"JBE",  JBE,  LABEL},
+    {"JE",   JE,   LABEL},
+    {"JNE",  JNE,  LABEL},
+
+    {"CALL", CALL, LABEL},
+    {"RET",  RET,  ARG_NO},  
+
+    {"IN",   IN,   ARG_NO},
 };
 
 //-------------------------------------------------- ASS -----------------------------------------------------------
@@ -100,6 +106,8 @@ struct AsmState {
     int pass;
     LabelsCase Case;
     int need_second_pass;
+
+
 };
 
 
@@ -128,6 +136,6 @@ static int FindRegister(const char* reg_name);
 
 CommandInfo* FindCommand(const char* name);
 
-void start_work(project* ass_main, AsmState* state);
+void start_work(project* ass_main, AsmState* state, const char* before_ass);
 
 void finish_work(AsmState* state, project* ass_main);

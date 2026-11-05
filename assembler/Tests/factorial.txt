@@ -1,0 +1,31 @@
+IN
+POP BX
+PUSH BX
+
+CALL FACTORIAL    
+OUT
+HLT
+
+FACTORIAL:
+    POP AX
+
+    PUSH AX
+    PUSH 1
+    JB IF        ;Если число больше 1
+
+    PUSH 1
+    RET
+
+
+
+
+IF:
+
+    PUSH AX
+
+    PUSH AX
+    PUSH 1
+    SUB
+    CALL FACTORIAL
+    MUL
+    RET
