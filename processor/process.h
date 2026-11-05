@@ -13,6 +13,11 @@
 const char* before_ass = "../assembler/input1.txt";
 const char* after_ass = "input2.txt";
 
+// 5 //
+// правки все внесешь
+// квадратка и факториал точно на 7 + красивый свитч
+// оперативка на // 8 // 9 // 
+
 
 #define STACK_DEBUG
 

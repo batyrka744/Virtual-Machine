@@ -32,11 +32,6 @@ void ReadFromBuffer(proccessor* v_m) {
     errors err = ERR_OK;
     size_t break_flag = 0;
 
-    StackElem_t a = 0;
-    StackElem_t b = 0;
-
-    StackElem_t popped = 0;
-
     while ((v_m->pc < v_m->buffer_size) && (break_flag == 0)) {   
 
         CodeDump(v_m);
@@ -60,7 +55,7 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
 
     StackElem_t a = 0;
     StackElem_t b = 0;
-    
+
 
     switch(command) {
 
@@ -116,6 +111,12 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
             b = StackPop(&v_m->stk, err);
             a = StackPop(&v_m->stk, err);
             StackPush(&v_m->stk, a * b);
+            v_m->pc += 1;
+            break;
+
+        case SQRT:
+            a = StackPop(&v_m->stk, err);
+            StackPush(&v_m->stk, sqrt(a));
             v_m->pc += 1;
             break;
 
