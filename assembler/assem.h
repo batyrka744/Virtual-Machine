@@ -27,7 +27,7 @@
 
 //--------------------------------------------- CONSTS -------------------------------------------------
 
-const char* before_ass = "Tests/factorial.txt";
+const char* before_ass = "Tests/square_eq.txt";
 const char* after_ass = "../processor/input2.txt";
 #define FILE_NAME_LENGTH 50
 

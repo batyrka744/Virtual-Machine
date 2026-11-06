@@ -35,7 +35,6 @@ void ReadFromBuffer(proccessor* v_m) {
     while ((v_m->pc < v_m->buffer_size) && (break_flag == 0)) {   
 
         CodeDump(v_m);
-
         command = (int)v_m->code[v_m->pc];
         
         execution(v_m, command, &break_flag, &err);
@@ -52,6 +51,9 @@ void ReadFromBuffer(proccessor* v_m) {
  * @param[out] err ERR_OK if all is OK else error
  */
 void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
+    my_assert(v_m != NULL,);
+    my_assert(break_flag != NULL,);
+    my_assert(err != NULL,);
 
     StackElem_t a = 0;
     StackElem_t b = 0;
@@ -330,6 +332,7 @@ StackElem_t* lf_buffer(const char* name, size_t* buffer_size) {
  * @return const char* name of command
  */
 const char* CommandName(int command, size_t* arg_flag) {
+    my_assert(arg_flag != NULL, "Error");
 
     *arg_flag = 0;
 
@@ -402,6 +405,8 @@ const char* CommandName(int command, size_t* arg_flag) {
 
         case IN:
             return "IN";
+        case SQRT:
+            return "SQRT";
 
         default:
             return "";
@@ -416,6 +421,7 @@ const char* CommandName(int command, size_t* arg_flag) {
  * @param[in, out] intel structure with processor's characteristic
  */
 void DestroyIntel(proccessor* intel) {
+    my_assert(intel != NULL,);
 
     StackDestroy(&intel->stk);
     StackDestroy(&intel->ret_stk);

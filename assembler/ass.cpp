@@ -91,12 +91,12 @@ int ParseLine(const char* line, AsmState* state) {
     my_assert(cmd != NULL, -1);
 
     if (cmd->arg == ARG_NO) {
-        int pidaras = ParseNoArg(cmd, line + offset, state);   //is_pidaras
-        return pidaras;
+        int err = ParseNoArg(cmd, line + offset, state);   //is_pidaras
+        return err;
 
     } else {
-        int pidaras = ParseWithArg(cmd, line + offset, state);
-        return pidaras;
+        int err = ParseWithArg(cmd, line + offset, state);
+        return err;
     }
 
     return -1;
@@ -347,6 +347,7 @@ char* ReadFromFile(const char* name, size_t* out_size) {
  * @param[in] address label's
  */
 void add_label(LabelsCase* Case, const char* name, size_t address) {
+    my_assert(Case != NULL,);
     my_assert(name != NULL,);
     my_assert(Case->count < MAX_LABELS,);
 
@@ -408,11 +409,8 @@ void finish_work(AsmState* state, project* ass_main) {
     fclose(ass_main->file_write); 
 
     free(state->bytecode);
-
     free(ass_main->index);
-
     free(ass_main->buffer);
-
 }
 
 /**
@@ -424,6 +422,8 @@ void finish_work(AsmState* state, project* ass_main) {
  */
 void start_work(project* ass_main, AsmState* state, const char* before_assem) {
     my_assert(ass_main != NULL,);
+    my_assert(state != NULL,);
+    my_assert(before_assem != NULL,);
 
     ass_main->file_write = fopen(after_ass, "wb");
     my_assert(ass_main->file_write != NULL,);

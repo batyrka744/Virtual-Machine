@@ -6,6 +6,13 @@ POP BX
 IN
 POP CX
 
+PUSH AX
+PUSH 0
+JE NULL_A
+
+PUSH BX
+PUSH 0
+
 CALL DISCRIMINANT
 POP DX
 
@@ -20,6 +27,34 @@ JE ONE_ROOT
 JMP TWO_ROOTS
 ;Конец Мэйна
 
+
+
+
+
+NULL_A:
+    PUSH BX
+    PUSH 0
+    JE NULL_A_B
+    PUSH -1
+    PUSH CX
+    MUL
+    PUSH BX
+    DIV
+    OUT
+    HLT
+
+NULL_A_B:
+    PUSH CX
+    PUSH 0
+    JE NULL_A_B_C
+    PUSH -1488
+    OUT
+    HLT
+
+NULL_A_B_C:
+    PUSH 14888888
+    OUT
+    HLT
 
 
 TWO_ROOTS:
@@ -66,6 +101,8 @@ ONE_ROOT:
     PUSH AX
     MUL
     DIV
+    PUSH 0
+    ADD
     OUT
     HLT
 
