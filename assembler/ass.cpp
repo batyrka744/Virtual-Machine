@@ -76,7 +76,7 @@ int ParseLine(const char* line, AsmState* state) {
     }
     size_t len = strlen(line);
 
-    char* colon = strchr(first_word, ':');      //pointer to char with ';'
+    char* colon = strchr(first_word, ':');      //pointer to char with ':'
     
     if (colon != NULL) {
         if (state->pass == FIRST_PASS) {
@@ -163,7 +163,7 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
         return 0;
     }
 
-    if (cmd->arg == REG) {
+    /*if (cmd->arg == REG) {
         char reg_name[COMMAND_LENGTH] = {0};
         int offset = 0;
 
@@ -185,12 +185,54 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
         state->ip += 2;
 
         return 0;
-    }
+    }*/
 
-    if (cmd->arg == ARG_VALUE) {     //если либо регистр либо число(PUSH)
+    if (cmd->arg == ARG_VALUE) {     //если либо регистр либо число(PUSH) либо оперативная память
 
         StackElem_t num_val = 0;
+        char reg_name[COMMAND_LENGTH] = {0};
+
         int offset = 0;
+        if (sscanf(end_of_line, " [ %lg ]%n", &num_val, &offset) == 1) {
+            if(CheckRubbish(end_of_line + offset) != 0) {
+                printf(RED "Syntax error: rubbish after number '%lg'\n" RESET, num_val);
+                return -1;
+            }
+
+            if (cmd->opcode == PUSH)
+                state->bytecode[state->ip] = (StackElem_t)PUSHm;
+            else
+                state->bytecode[state->ip] = (StackElem_t)POPm;
+
+            state->bytecode[state->ip + 1] = (StackElem_t)num_val;
+            state->ip += 2;
+
+            return 0;
+        }
+
+        if (sscanf(end_of_line, " [ %[^] \t\r\n] ]%n", reg_name, &offset) == 1) {
+            if (CheckRubbish(end_of_line + offset) != 0) {
+                printf(RED "Syntax error: rubbish after register '%s'\n" RESET, reg_name);
+                return -1;
+            }
+            int reg_num = FindRegister((const char*)reg_name);   //находим номер регистра в массиве
+            if (reg_num == NOT_FOUNDED) {
+                printf(RED "Invalid name of register\n" RESET);
+                return -1;
+            }
+
+            if (cmd->opcode == PUSH)
+                state->bytecode[state->ip] = (StackElem_t)PUSHmr;
+            else
+                state->bytecode[state->ip] = (StackElem_t)POPmr;
+
+            state->bytecode[state->ip + 1] = (StackElem_t)reg_num;
+            state->ip += 2;
+
+            return 0;
+        }
+
+
         if (sscanf(end_of_line, "%lg%n", &num_val, &offset) == 1) {
             if(CheckRubbish(end_of_line + offset) != 0) {
                 printf(RED "Syntax error: rubbish after number '%lg'\n" RESET, num_val);
@@ -203,7 +245,6 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
             return 0;
         }
 
-        char reg_name[COMMAND_LENGTH] = {0};
         if (sscanf(end_of_line, "%s%n", reg_name, &offset) == 1) {
             if(CheckRubbish(end_of_line + offset) != 0) {
                 printf(RED "Syntax error: rubbish after register '%s'\n" RESET, reg_name);
@@ -212,9 +253,13 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
 
             int reg_num = FindRegister((const char*)reg_name);   //находим номер регистра в массиве
             if (reg_num == NOT_FOUNDED) {
-                printf(RED "Invalid name of register" RESET);
+                printf(RED "Invalid name of register\n" RESET);
+                return -1;
             }
-            state->bytecode[state->ip] = (StackElem_t)PUSHr;
+            if (cmd->opcode == PUSH)
+                state->bytecode[state->ip] = (StackElem_t)PUSHr;
+            else
+                state->bytecode[state->ip] = (StackElem_t)POP;
             state->bytecode[state->ip + 1] = (StackElem_t)reg_num;
             state->ip += 2;
 
@@ -258,9 +303,12 @@ static int FindRegister(const char* reg_name) {
         return NOT_FOUNDED;
 
     for (size_t i = 0; i < NUM_REGIST; i++) {
-        if (strcmp(reg_name, registers[i].name) == 0) {
+        if (registers[i].name == NULL)
+            continue;
+
+        if (strcmp(reg_name, registers[i].name) == 0)
             return registers[i].num;
-        }
+        
     }
     return NOT_FOUNDED;
 }
@@ -317,7 +365,6 @@ char* ReadFromFile(const char* name, size_t* out_size) {
     my_assert(name != NULL, NULL);
 
     FILE* file = fopen(name, "rb");
-    printf(BLUE "%s67\n" RESET, name);
     my_assert(file != NULL, NULL);
 
     struct stat file_info = {0};

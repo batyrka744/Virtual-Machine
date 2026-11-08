@@ -27,7 +27,7 @@
 
 //--------------------------------------------- CONSTS -------------------------------------------------
 
-const char* before_ass = "Tests/square_eq.txt";
+const char* before_ass = "Tests/test_memory.txt";
 const char* after_ass = "../processor/input2.txt";
 #define FILE_NAME_LENGTH 50
 
@@ -97,7 +97,7 @@ static CommandInfo all_commands[] = {
     {"SUB",  SUB,  ARG_NO},
     {"DIV",  DIV,  ARG_NO},
     {"OUT",  OUT,  ARG_NO},
-    {"POP",  POP,  REG},
+    {"POP",  POP,  ARG_VALUE},
     {"MUL",  MUL,  ARG_NO},
     {"SQRT", SQRT, ARG_NO},
 
@@ -113,6 +113,7 @@ static CommandInfo all_commands[] = {
     {"RET",  RET,  ARG_NO},  
 
     {"IN",   IN,   ARG_NO},
+    {"DMP", DMP, ARG_NO}
 };
 
 

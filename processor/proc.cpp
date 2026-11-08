@@ -204,7 +204,73 @@ void exec_jne(proccessor* v_m, size_t* breakflag, errors* err) {
         v_m->pc += 2;
 }
 
+void exec_push_m(proccessor* v_m, size_t* breakflag, errors* err) {
+    int mem_addr = (int)v_m->code[v_m->pc + 1];
+    StackElem_t b = v_m->memory[mem_addr];
+    StackPush(&v_m->stk, b);
+    v_m->pc += 2;
+}
 
+void exec_pop_m(proccessor* v_m, size_t* breakflag, errors* err) {
+    int mem_addr = (int)v_m->code[v_m->pc + 1];
+    check_memory(v_m, mem_addr);
+    v_m->memory[mem_addr] = StackPop(&v_m->stk, err);
+    v_m->pc += 2;
+}
+
+void exec_dmp(proccessor* v_m, size_t* breakflag, errors* err) {
+    fprintf(DUMP_MEMORY_FILE, "\n");
+    for (size_t i = 0; i < DIAMETR; i++) {
+        for (size_t j = 0; j < DIAMETR; j++) {
+
+            size_t x = DIAMETR * i + j;
+            char pixel = ' ';
+            if (x < v_m->memory_size && v_m->memory[x] != 0) {
+                pixel = '*';
+            } 
+            fprintf(DUMP_MEMORY_FILE, "%c ", pixel);
+        } 
+        fprintf(DUMP_MEMORY_FILE, "\n");
+    }
+    v_m->pc += 1;
+}
+
+void exec_push_mr(proccessor* v_m, size_t* breakflag, errors* err) {
+    int reg_idx = (int)v_m->code[v_m->pc + 1];
+    int mem_addr = (int)v_m->registers[reg_idx];
+
+    check_memory(v_m, mem_addr);
+
+    StackPush(&v_m->stk, v_m->memory[mem_addr]);
+    v_m->pc += 2;
+}
+
+void exec_pop_mr(proccessor* v_m, size_t* breakflag, errors* err) {
+    int reg_idx = (int)v_m->code[v_m->pc + 1];
+    int mem_addr = (int)v_m->registers[reg_idx];
+
+    check_memory(v_m, mem_addr);
+
+    v_m->memory[mem_addr] = StackPop(&v_m->stk, err);
+    v_m->pc += 2;
+}
+
+void check_memory(proccessor* v_m, int mem_addr) {
+    if (mem_addr >= MAX_MEMORY_SIZE) {
+        printf(YELLOW "Change \"MAX_MEMORY_SIZE\" if you want more memory\n" RESET);
+        return;
+    } else if (mem_addr >= v_m->memory_size) {
+        size_t old_size = v_m->memory_size;
+        size_t new_size = (size_t)(mem_addr + 1) * 2;
+
+        StackElem_t* new_memory = (StackElem_t*)realloc(v_m->memory, new_size * sizeof(StackElem_t));
+        my_assert(new_memory != NULL,);
+
+        memset(new_memory + old_size, 0, (new_size - old_size) * sizeof(StackElem_t));
+        v_m->memory = new_memory;
+        v_m->memory_size = new_size;
+    }
+}
 
 /**
  * @brief prints into the file buffer's dump
@@ -337,7 +403,8 @@ void DestroyIntel(proccessor* intel) {
     StackDestroy(&intel->ret_stk);
     intel->buffer_size = POISON_SIZE;
     intel->pc = POISON_SIZE;
-
+    
+    free(intel->memory);
     free(intel->code);
 }
 
@@ -346,4 +413,8 @@ void InitIntel(proccessor* v_m) {
     STACK_INIT(v_m->ret_stk, RECURSION_DEEPTH);    
     v_m->buffer_size = 0;
     v_m->pc = 0;
+
+    v_m->memory = (StackElem_t*)calloc(DIAMETR * DIAMETR, sizeof(StackElem_t));
+    my_assert(v_m->memory != NULL,);
+    v_m->memory_size = DIAMETR * DIAMETR;
 }

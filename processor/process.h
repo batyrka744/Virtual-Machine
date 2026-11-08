@@ -9,6 +9,10 @@
 #define LOG_FILE "log.txt"
 #define STACK_CAPACITY 10
 #define RECURSION_DEEPTH 10
+#define MAX_MEMORY_SIZE 5000
+
+#define DIAMETR 5
+#define DUMP_MEMORY_FILE stdout
 
 #define YES 1
 #define NO 0
@@ -32,6 +36,9 @@ struct proccessor {
     StackElem_t* code;
     size_t buffer_size;
     int pc; 
+
+    StackElem_t* memory;
+    size_t memory_size;
 
     StackElem_t registers[NUM_REGIST] = {0}; 
 };
@@ -106,6 +113,18 @@ void exec_in(proccessor* v_m, size_t* breakflag, errors* err);
 
 void exec_sqrt(proccessor* v_m, size_t* breakflag, errors* err);
 
+void exec_push_m(proccessor* v_m, size_t* breakflag, errors* err);
+
+void exec_pop_m(proccessor* v_m, size_t* breakflag, errors* err);
+
+void exec_dmp(proccessor* v_m, size_t* breakflag, errors* err);
+
+void exec_push_mr(proccessor* v_m, size_t* breakflag, errors* err);
+
+void exec_pop_mr(proccessor* v_m, size_t* breakflag, errors* err);
+
+void check_memory(proccessor* v_m, int mem_addr);
+
 static const CommandHandler command_table[] = {
     {"HLT",  HLT,  exec_hlt, NO}, 
     {"PUSH", PUSH, exec_push, YES},
@@ -130,4 +149,9 @@ static const CommandHandler command_table[] = {
 
     {"IN",   IN,   exec_in, NO},
     {"SQRT", SQRT, exec_sqrt, NO},
+    {"PUSHm", PUSHm, exec_push_m, YES},
+    {"POPm", POPm, exec_pop_m, YES},
+    {"DMP", DMP, exec_dmp, NO},
+    {"PUSHmr", PUSHmr, exec_push_mr, YES},
+    {"POPmr", POPmr, exec_pop_mr, YES},
 };

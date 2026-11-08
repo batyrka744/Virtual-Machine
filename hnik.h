@@ -13,9 +13,13 @@
 
 #define my_assert(exp, ret) if(!(exp)) {\
     \
-    printf(YELLOW "%s:%d: [Assertation failed: %s, file %s, line %d]\n" RESET, __FILE__, __LINE__, #exp,  __FILE__, __LINE__);\
+    printf(YELLOW "%s:%d: [Assertation failed: %s]\n" RESET, __FILE__, __LINE__, #exp);\
     return ret;}     //fprintf
 
+#define my_assert_tell(exp, text, ret) if(!(exp)) {\
+    \
+    printf(YELLOW "%s:%d: [Assertation failed: %s]\n" RESET, __FILE__, __LINE__, text);\
+    return ret;} 
 
 //---------------------------------------------- ENUMS ---------------------------------------------------
 
@@ -42,7 +46,13 @@ enum commands {
     RET = 17,
 
     IN = 18,
-    SQRT = 19
+    SQRT = 19,
+
+    PUSHm = 20,
+    POPm = 21,
+    DMP = 22,
+    PUSHmr = 23,
+    POPmr = 24
 };
 
 //------------------------------------------------- REGISTERS ------------------------------------------------------
