@@ -30,7 +30,6 @@ enum commands {
     PUSHr = 7, 
     MUL = 8, 
 
-
     JMP = 9, 
     JA = 10,    // <
     JAE = 11,   // <=
@@ -69,4 +68,5 @@ static Registr registers[NUM_REGIST] = {
     {"DX", DX, strlen("DX")},
 };
 
+//-----------------------------------------------------------------------------------------------------------------
 struct Line {char* str; size_t len;};

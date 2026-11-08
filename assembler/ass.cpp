@@ -11,15 +11,14 @@ int main(int argc, char* argv[]) {
         start_work(&ass_main, &state, before_ass);  //initialization of structs
     else {
         char beginning[FILE_NAME_LENGTH] = "Tests/";
-        printf(RED "PENNIS %s\n" RESET, strcat(beginning, (const char*)argv[1]));
         start_work(&ass_main, &state, beginning);  //initialization of structs
     }
         
 
     Assembler(&ass_main, &state);
 
-    if (state.need_second_pass == 1) {
-        state.pass = 2;
+    if (state.need_second_pass == YES) {
+        state.pass = SECOND_PASS;
         Assembler(&ass_main, &state);
     }
     
@@ -80,7 +79,7 @@ int ParseLine(const char* line, AsmState* state) {
     char* colon = strchr(first_word, ':');      //pointer to char with ';'
     
     if (colon != NULL) {
-        if (state->pass == 1) {
+        if (state->pass == FIRST_PASS) {
             *colon = '\0';
             add_label(&state->Case, first_word, state->ip);
         }
@@ -154,7 +153,7 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
         int target_address = find_label(&state->Case, label_name);   //ищем адрес в таблице меток
 
         if (target_address == -1) {    //метка ещё не найдена
-            state->need_second_pass = 1;
+            state->need_second_pass = YES;
             target_address = 0;
         }
         state->bytecode[state->ip] = (StackElem_t)cmd->opcode;
@@ -433,6 +432,6 @@ void start_work(project* ass_main, AsmState* state, const char* before_assem) {
     ass_main->index = SplitLines(ass_main->buffer, ass_main->out_size, &ass_main->nLines);
 
 
-    state->pass = 1; //
+    state->pass = FIRST_PASS; //
     state->bytecode = (StackElem_t*)calloc(ass_main->nLines*2, sizeof(StackElem_t));
 }

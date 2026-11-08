@@ -5,7 +5,8 @@ int main() {
 
     clean_file();  
 
-    proccessor intel = {0};
+    proccessor intel;
+    InitIntel(&intel);
     
     intel.code = lf_buffer(after_ass, &intel.buffer_size);  
     my_assert(intel.code != NULL, -1);  
@@ -23,9 +24,6 @@ int main() {
  */
 void ReadFromBuffer(proccessor* v_m) {
     my_assert(v_m != NULL,);  
-
-    STACK_INIT(v_m->stk, STACK_CAPACITY);   
-    STACK_INIT(v_m->ret_stk, RECURSION_DEEPTH);    
 
     int command = 0;
 
@@ -54,172 +52,157 @@ void execution(proccessor* v_m, int command, size_t* break_flag, errors* err) {
     my_assert(v_m != NULL,);
     my_assert(break_flag != NULL,);
     my_assert(err != NULL,);
-
-    StackElem_t a = 0;
-    StackElem_t b = 0;
-
-
-    switch(command) {
-
-        case HLT:
-            (*break_flag)++;
-            v_m->pc += 1;
-            break;
-
-        case PUSH:
-            StackPush(&v_m->stk, v_m->code[v_m->pc + 1]);
-            v_m->pc += 2;
-            break;
-
-        case ADD: 
-            b = StackPop(&v_m->stk, err);
-            a = StackPop(&v_m->stk, err);
-            StackPush(&v_m->stk, a + b);
-            v_m->pc += 1;
-            break;
-
-        case SUB:
-            b = StackPop(&v_m->stk, err); 
-            a = StackPop(&v_m->stk, err); 
-            StackPush(&v_m->stk, a - b);
-            v_m->pc += 1;
-            break;
-
-        case DIV:
-            b = StackPop(&v_m->stk, err);
-            a = StackPop(&v_m->stk, err);
-            StackPush(&v_m->stk, a / b);
-            v_m->pc += 1;
-            break;
-
-        case OUT:
-            printf(GREEN "%lg\n" RESET, StackPop(&v_m->stk, err));
-            v_m->pc += 1;
-            break;
-
-        case POP: {
-            v_m->registers[(int)v_m->code[v_m->pc + 1]] = StackPop(&v_m->stk, err);
-            v_m->pc += 2;
-            break;
-        }
-            
-
-        case PUSHr:
-            StackPush(&v_m->stk, v_m->registers[(int)v_m->code[v_m->pc + 1]]);
-            v_m->pc += 2;
-            break;
-
-        case MUL:
-            b = StackPop(&v_m->stk, err);
-            a = StackPop(&v_m->stk, err);
-            StackPush(&v_m->stk, a * b);
-            v_m->pc += 1;
-            break;
-
-        case SQRT:
-            a = StackPop(&v_m->stk, err);
-            StackPush(&v_m->stk, sqrt(a));
-            v_m->pc += 1;
-            break;
-
-        case JMP:
-            v_m->pc = (int)v_m->code[v_m->pc + 1];
-            break;
-
-        case JA:
-            b = StackPop(&v_m->stk, err);
-            a = StackPop(&v_m->stk, err);
-
-            if (b > a) 
-                v_m->pc = (int)v_m->code[v_m->pc + 1];
-            else
-                v_m->pc += 2;
-
-            break;
-
-        case JAE:
-            b = StackPop(&v_m->stk, err);
-            a = StackPop(&v_m->stk, err);
-
-            if (b >= a) 
-                v_m->pc = (int)v_m->code[v_m->pc + 1];
-            else
-                v_m->pc += 2;
-            
-            break;
-
-        case JB:
-            b = StackPop(&v_m->stk, err);
-            a = StackPop(&v_m->stk, err);
-
-            if (a > b) 
-                v_m->pc = (int)v_m->code[v_m->pc + 1];
-            else
-                v_m->pc += 2;
-            
-            break;
-
-        case JBE:
-            b = StackPop(&v_m->stk, err);
-            a = StackPop(&v_m->stk, err);
-
-            if (a >= b) 
-                v_m->pc = (int)v_m->code[v_m->pc + 1];
-            else
-                v_m->pc += 2;
-            
-            break;
-
-        case JE:
-            b = StackPop(&v_m->stk, err);
-            a = StackPop(&v_m->stk, err);
-
-            if (b == a) 
-                v_m->pc = (int)v_m->code[v_m->pc + 1];
-            else
-                v_m->pc += 2;
-            
-            break;
-
-        case JNE:
-            b = StackPop(&v_m->stk, err);
-            a = StackPop(&v_m->stk, err);
-
-            if (b != a) 
-                v_m->pc = (int)v_m->code[v_m->pc + 1];
-            else
-                v_m->pc += 2;
-            
-            break;
-
-        case CALL:
-            StackPush(&v_m->ret_stk, v_m->pc + 2);
-            v_m->pc = (int)v_m->code[v_m->pc + 1];
-            break;
-            
-        case RET:
-            v_m->pc = (int)StackPop(&v_m->ret_stk, err);
-            break;
-
-        case IN: {
-            StackElem_t x = 0;
-
-            printf(MAGENTA "Enter a value\n" RESET);
-            fflush(stdout);
-            my_assert(scanf("%lg", &x) == 1,)
-
-            StackPush(&v_m->stk, x);
-            v_m->pc += 1;
-            break;
-        }
-        
-        default:
-            printf("switch-case err\n");
-            v_m->pc += 1;
-            break;
-    }
+    my_assert(command >= 0,);
+    my_assert(command <= sizeof(command_table) / sizeof(command_table[0]),);
+    
+    command_table[command].func(v_m, break_flag, err);
 }
 
+void exec_hlt(proccessor* v_m, size_t* breakflag, errors* err) {
+    (*breakflag)++;
+    v_m->pc += 1;
+}
+
+void exec_push(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackPush(&v_m->stk, v_m->code[v_m->pc + 1]);
+    v_m->pc += 2;
+}
+
+void exec_add(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t b = StackPop(&v_m->stk, err);
+    StackElem_t a = StackPop(&v_m->stk, err);
+    StackPush(&v_m->stk, a + b);
+    v_m->pc += 1;
+}
+
+void exec_sub(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t b = StackPop(&v_m->stk, err);
+    StackElem_t a = StackPop(&v_m->stk, err);
+    StackPush(&v_m->stk, a - b);
+    v_m->pc += 1;
+}
+
+void exec_mul(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t b = StackPop(&v_m->stk, err);
+    StackElem_t a = StackPop(&v_m->stk, err);
+    StackPush(&v_m->stk, a * b);
+    v_m->pc += 1;
+}
+
+void exec_div(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t b = StackPop(&v_m->stk, err);
+    my_assert(b != 0,);
+
+    StackElem_t a = StackPop(&v_m->stk, err);
+    StackPush(&v_m->stk, a / b);
+    v_m->pc += 1;
+}
+
+void exec_sqrt(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t b = StackPop(&v_m->stk, err);
+    my_assert(b >= 0,);
+    StackPush(&v_m->stk, sqrt(b));
+    v_m->pc += 1;
+}
+
+void exec_push_r(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackPush(&v_m->stk, v_m->registers[(int)v_m->code[v_m->pc + 1]]);
+    v_m->pc += 2;
+}
+
+void exec_pop(proccessor* v_m, size_t* breakflag, errors* err) {
+    v_m->registers[(int)v_m->code[v_m->pc + 1]] = StackPop(&v_m->stk, err);
+    v_m->pc += 2;
+}
+
+void exec_out(proccessor* v_m, size_t* breakflag, errors* err) {
+    printf(GREEN "%lg\n" RESET, StackPop(&v_m->stk, err));
+    v_m->pc += 1;
+}
+
+void exec_in(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t x = 0;
+
+    printf(MAGENTA "Enter a value\n" RESET);
+    fflush(stdout);
+    my_assert(scanf("%lg", &x) == 1,)
+
+    StackPush(&v_m->stk, x);
+    v_m->pc += 1;
+}
+
+void exec_call(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackPush(&v_m->ret_stk, v_m->pc + 2);
+    v_m->pc = (int)v_m->code[v_m->pc + 1];
+}
+
+void exec_ret(proccessor* v_m, size_t* breakflag, errors* err) {
+    v_m->pc = (int)StackPop(&v_m->ret_stk, err);
+}
+
+void exec_jmp(proccessor* v_m, size_t* breakflag, errors* err) {
+    v_m->pc = (int)v_m->code[v_m->pc + 1];
+}
+
+void exec_ja(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t b = StackPop(&v_m->stk, err);
+    StackElem_t a = StackPop(&v_m->stk, err);
+
+    if (b > a) 
+        v_m->pc = (int)v_m->code[v_m->pc + 1];
+    else
+        v_m->pc += 2;
+}
+
+void exec_jae(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t b = StackPop(&v_m->stk, err);
+    StackElem_t a = StackPop(&v_m->stk, err);
+
+    if (b >= a) 
+        v_m->pc = (int)v_m->code[v_m->pc + 1];
+    else
+        v_m->pc += 2;
+}
+
+void exec_jb(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t b = StackPop(&v_m->stk, err);
+    StackElem_t a = StackPop(&v_m->stk, err);
+
+    if (b < a) 
+        v_m->pc = (int)v_m->code[v_m->pc + 1];
+    else
+        v_m->pc += 2;
+}
+
+void exec_jbe(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t b = StackPop(&v_m->stk, err);
+    StackElem_t a = StackPop(&v_m->stk, err);
+
+    if (b <= a) 
+        v_m->pc = (int)v_m->code[v_m->pc + 1];
+    else
+        v_m->pc += 2;
+}
+
+void exec_je(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t b = StackPop(&v_m->stk, err);
+    StackElem_t a = StackPop(&v_m->stk, err);
+
+    if (b == a) 
+        v_m->pc = (int)v_m->code[v_m->pc + 1];
+    else
+        v_m->pc += 2;
+}
+
+void exec_jne(proccessor* v_m, size_t* breakflag, errors* err) {
+    StackElem_t b = StackPop(&v_m->stk, err);
+    StackElem_t a = StackPop(&v_m->stk, err);
+
+    if (b != a) 
+        v_m->pc = (int)v_m->code[v_m->pc + 1];
+    else
+        v_m->pc += 2;
+}
 
 
 
@@ -238,9 +221,9 @@ void CodeDump(proccessor* v_m) {
     size_t arg_flag = 0;
 
     fprintf(file, "========= BYTE-CODE =========\n");
-    for (size_t i = 0; i < v_m->buffer_size && empty_flag < 2; i++) {
+    for (size_t i = 0; i < v_m->buffer_size && empty_flag < 10; i++) {
 
-        fprintf(file, "[%llu] %lg", i, v_m->code[i]);
+        fprintf(file, "[%zu] %lg", i, v_m->code[i]);
 
         if (arg_flag == 1) {
             arg_flag = 0;
@@ -333,87 +316,14 @@ StackElem_t* lf_buffer(const char* name, size_t* buffer_size) {
  */
 const char* CommandName(int command, size_t* arg_flag) {
     my_assert(arg_flag != NULL, "Error");
+    my_assert(command >= 0, "Error");
+    my_assert(command <= sizeof(command_table) / sizeof(command_table[0]), "Error")
 
-    *arg_flag = 0;
-
-    switch(command) {
-
-        case HLT:
-            return "HLT";
-
-        case PUSH:
-            *arg_flag = 1;
-            return "PUSH";
-
-        case ADD:
-            return "ADD";
-
-        case SUB:
-            return "SUB";
-
-        case DIV:
-            return "DIV";
-
-        case OUT:
-            return "OUT";
-
-        case POP:
-            *arg_flag = 1;
-            return "POP";
-
-        case PUSHr:
-            *arg_flag = 1;
-            return "PUSHr";
-
-        case MUL:
-            return "MUL";
-
-        case JMP:
-            *arg_flag = 1;
-            return "JMP";
-
-        case JA:
-            *arg_flag = 1;
-            return "JA";
-
-        case JAE:
-            *arg_flag = 1;
-            return "JAE";
-
-        case JB:
-            *arg_flag = 1;
-            return "JB";
-
-        case JBE:
-            *arg_flag = 1;
-            return "JBE";
-
-        case JE:
-            *arg_flag = 1;
-            return "JNE";
-
-        case JNE:
-            *arg_flag = 1;
-            return "JNE";
-
-        case CALL:
-            *arg_flag = 1;
-            return "CALL";
-
-        case RET:
-            return "RET";
-
-        case IN:
-            return "IN";
-        case SQRT:
-            return "SQRT";
-
-        default:
-            return "";
-    }
-
-    return "";
+    *arg_flag = (command_table[command].has_arg != NO) ? 1 : 0;
+    return command_table[command].name;
 }
+
+
 
 /**
  * @brief cleans memory and finishes work
@@ -429,4 +339,11 @@ void DestroyIntel(proccessor* intel) {
     intel->pc = POISON_SIZE;
 
     free(intel->code);
+}
+
+void InitIntel(proccessor* v_m) {
+    STACK_INIT(v_m->stk, STACK_CAPACITY);   
+    STACK_INIT(v_m->ret_stk, RECURSION_DEEPTH);    
+    v_m->buffer_size = 0;
+    v_m->pc = 0;
 }

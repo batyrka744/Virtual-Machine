@@ -31,6 +31,11 @@ const char* before_ass = "Tests/square_eq.txt";
 const char* after_ass = "../processor/input2.txt";
 #define FILE_NAME_LENGTH 50
 
+#define FIRST_PASS 1
+#define SECOND_PASS 2
+#define YES 1
+#define NO 0
+
 
 //------------------------------------------------ LABELS -----------------------------------------------------------
 
@@ -55,6 +60,20 @@ struct project {
     size_t out_size, nLines;
     char* buffer;
     Line* index;
+};
+
+
+
+//-------------------------------------------------- ASS -----------------------------------------------------------
+
+struct AsmState {
+
+    StackElem_t* bytecode;
+    size_t ip;
+    size_t capacity;
+    int pass;
+    LabelsCase Case;
+    int need_second_pass;
 };
 
 enum ArgType {
@@ -94,20 +113,6 @@ static CommandInfo all_commands[] = {
     {"RET",  RET,  ARG_NO},  
 
     {"IN",   IN,   ARG_NO},
-};
-
-//-------------------------------------------------- ASS -----------------------------------------------------------
-
-struct AsmState {
-
-    StackElem_t* bytecode;
-    size_t ip;
-    size_t capacity;
-    int pass;
-    LabelsCase Case;
-    int need_second_pass;
-
-
 };
 
 

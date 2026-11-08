@@ -2,6 +2,10 @@ IN
 POP BX
 PUSH BX
 
+PUSH BX
+PUSH 0
+JA BAD
+
 CALL FACTORIAL    
 OUT
 HLT
@@ -29,3 +33,8 @@ IF:
     CALL FACTORIAL
     MUL
     RET
+
+BAD:
+    PUSH -1488
+    OUT
+    HLT
