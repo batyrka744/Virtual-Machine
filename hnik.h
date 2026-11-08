@@ -1,5 +1,10 @@
 #include "Stack_canary.h"
 #include <string.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+
+//--------------------------------------------- MACROSES -------------------------------------
 
 #define BLACK "\x1b[30m"
 #define RED "\x1b[31m"
@@ -78,5 +83,5 @@ static Registr registers[NUM_REGIST] = {
     {"DX", DX, strlen("DX")},
 };
 
-//-----------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------- FOR READ -------------------------------------------------------
 struct Line {char* str; size_t len;};

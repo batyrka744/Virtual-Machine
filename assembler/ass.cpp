@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
         start_work(&ass_main, &state, beginning);  //initialization of structs
     }
         
-
+    
     Assembler(&ass_main, &state);
 
     if (state.need_second_pass == YES) {
@@ -23,13 +23,9 @@ int main(int argc, char* argv[]) {
     }
     
     fwrite(state.bytecode, sizeof(StackElem_t), state.ip, ass_main.file_write); 
-    // for (size_t i = 0; i < state.ip; i++) {
-    //     fprintf(ass_main.file_write, "%lg ", state.bytecode[i]);
-    // }
-    fprintf(ass_main.file_write, "\n");
+    
 
     finish_work(&state, &ass_main);
-
     return 0;
 }
 
@@ -61,20 +57,19 @@ void Assembler(project* ass_main, AsmState* state) {
  * @return int 0 if ok else -1
  */
 int ParseLine(const char* line, AsmState* state) {
-    my_assert(line != NULL, -1);
-    my_assert(state != NULL, -1);
+    my_assert(line != NULL, ERROR);
+    my_assert(state != NULL, ERROR);
 
     int offset = 0;    //num of readed chars
     char first_word[COMMAND_LENGTH] = {0};
     int readed = sscanf(line, "%s%n", first_word, &offset);   //num of readed elems
 
-    if (first_word[0] == ';') {
-        return 0;
-    }
-    if (readed != 1) {     //если не считалось
-        return 0;
-    }
-    size_t len = strlen(line);
+    if (first_word[0] == ';') 
+        return OK;
+    
+    if (readed != 1)     //если не считалось
+        return OK;
+
 
     char* colon = strchr(first_word, ':');      //pointer to char with ':'
     
@@ -83,22 +78,20 @@ int ParseLine(const char* line, AsmState* state) {
             *colon = '\0';
             add_label(&state->Case, first_word, state->ip);
         }
-        return 0;
+        return OK;
     }
 
     CommandInfo* cmd = FindCommand(first_word);    //name, opcode, arg
     my_assert(cmd != NULL, -1);
 
-    if (cmd->arg == ARG_NO) {
-        int err = ParseNoArg(cmd, line + offset, state);   //is_pidaras
-        return err;
+    int err = OK;
 
-    } else {
-        int err = ParseWithArg(cmd, line + offset, state);
-        return err;
-    }
-
-    return -1;
+    if (cmd->arg == ARG_NO)
+        err = ParseNoArg(cmd, line + offset, state);
+    else 
+        err = ParseWithArg(cmd, line + offset, state);
+    
+    return err;
 }
 
 /**
@@ -110,19 +103,19 @@ int ParseLine(const char* line, AsmState* state) {
  * @return int 0 if ok else -1
  */
 int ParseNoArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state) {
-    my_assert(cmd != NULL, -1);
-    my_assert(state != NULL, -1);
-    my_assert(end_of_line != NULL, -1);
+    my_assert(cmd != NULL, ERROR);
+    my_assert(state != NULL, ERROR);
+    my_assert(end_of_line != NULL, ERROR);
 
     if (CheckRubbish(end_of_line) != 0) {
         printf(RED "Wrong ass-code: command %s expects no arguments, got '%s'\n" RESET, cmd->name, end_of_line);
-        return -1;
+        return ERROR;
     } 
 
 
     state->bytecode[state->ip++] = (StackElem_t)cmd->opcode;   //записываем код команды в буфер
 
-    return 0;
+    return OK;
 }
 
 /**
@@ -134,9 +127,9 @@ int ParseNoArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state)
  * @return int 0 if ok else -1
  */
 int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* state) {
-    my_assert(cmd != NULL, -1);
-    my_assert(state != NULL, -1);
-    my_assert(end_of_line != NULL, -1);
+    my_assert(cmd != NULL, ERROR);
+    my_assert(state != NULL, ERROR);
+    my_assert(end_of_line != NULL, ERROR);
 
     if (cmd->arg == LABEL) {
         char label_name[COMMAND_LENGTH] = {0};
@@ -144,11 +137,11 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
 
         if (sscanf(end_of_line, "%s%n", label_name, &offset) != 1) {
             printf(RED "Syntax error: rubbish after label '%s'\n" RESET, label_name);
-            return -1;
+            return ERROR;
         } 
         if (CheckRubbish(end_of_line + offset) != 0) {
             printf(RED "Syntax Error: rubbish after label '%s'\n" RESET, label_name);
-            return -1;
+            return ERROR;
         }
         int target_address = find_label(&state->Case, label_name);   //ищем адрес в таблице меток
 
@@ -160,7 +153,7 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
         state->bytecode[state->ip + 1] = (StackElem_t)target_address;
         state->ip += 2;
 
-        return 0;
+        return OK;
     }
 
     /*if (cmd->arg == REG) {
@@ -196,7 +189,7 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
         if (sscanf(end_of_line, " [ %lg ]%n", &num_val, &offset) == 1) {
             if(CheckRubbish(end_of_line + offset) != 0) {
                 printf(RED "Syntax error: rubbish after number '%lg'\n" RESET, num_val);
-                return -1;
+                return ERROR;
             }
 
             if (cmd->opcode == PUSH)
@@ -207,18 +200,18 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
             state->bytecode[state->ip + 1] = (StackElem_t)num_val;
             state->ip += 2;
 
-            return 0;
+            return ERROR;
         }
 
         if (sscanf(end_of_line, " [ %[^] \t\r\n] ]%n", reg_name, &offset) == 1) {
             if (CheckRubbish(end_of_line + offset) != 0) {
                 printf(RED "Syntax error: rubbish after register '%s'\n" RESET, reg_name);
-                return -1;
+                return ERROR;
             }
             int reg_num = FindRegister((const char*)reg_name);   //находим номер регистра в массиве
             if (reg_num == NOT_FOUNDED) {
                 printf(RED "Invalid name of register\n" RESET);
-                return -1;
+                return ERROR;
             }
 
             if (cmd->opcode == PUSH)
@@ -229,32 +222,32 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
             state->bytecode[state->ip + 1] = (StackElem_t)reg_num;
             state->ip += 2;
 
-            return 0;
+            return OK;
         }
 
 
         if (sscanf(end_of_line, "%lg%n", &num_val, &offset) == 1) {
             if(CheckRubbish(end_of_line + offset) != 0) {
                 printf(RED "Syntax error: rubbish after number '%lg'\n" RESET, num_val);
-                return -1;
+                return ERROR;
             }
             state->bytecode[state->ip] = (StackElem_t)cmd->opcode;
             state->bytecode[state->ip + 1] = (StackElem_t)num_val;
             state->ip += 2;
 
-            return 0;
+            return OK;
         }
 
         if (sscanf(end_of_line, "%s%n", reg_name, &offset) == 1) {
             if(CheckRubbish(end_of_line + offset) != 0) {
                 printf(RED "Syntax error: rubbish after register '%s'\n" RESET, reg_name);
-                return -1;
+                return ERROR;
             }
 
             int reg_num = FindRegister((const char*)reg_name);   //находим номер регистра в массиве
             if (reg_num == NOT_FOUNDED) {
                 printf(RED "Invalid name of register\n" RESET);
-                return -1;
+                return ERROR;
             }
             if (cmd->opcode == PUSH)
                 state->bytecode[state->ip] = (StackElem_t)PUSHr;
@@ -263,11 +256,11 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
             state->bytecode[state->ip + 1] = (StackElem_t)reg_num;
             state->ip += 2;
 
-            return 0;
+            return OK;
             
         } 
     }   
-    return -1;
+    return ERROR;
 }
 
 /**
@@ -278,18 +271,18 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
  */
 int CheckRubbish(const char* str) {
     if (str == NULL) {
-        return 0;
+        return OK;
     }
 
     for (size_t i = 0; str[i] != '\0'; i++) {   //комментарий
         if (str[i] == ';')
-            return 0;
+            return OK;
         
         if(!isspace((char)str[i])) {
-            return -1;
+            return ERROR;
         }
     }
-    return 0;
+    return OK;
 }
 
 /**
@@ -412,8 +405,8 @@ void add_label(LabelsCase* Case, const char* name, size_t address) {
  * @return int label's address if founded else -1
  */
 int find_label(const LabelsCase* Case, const char* name) {
-    my_assert(Case != NULL, -1);
-    my_assert(name != NULL, 0);
+    my_assert(Case != NULL, ERROR);
+    my_assert(name != NULL, ERROR);
 
     for (size_t i = 0; i < Case->count; i++) {
         if (strcmp(name, Case->labels[i].name) == 0) {
@@ -479,6 +472,6 @@ void start_work(project* ass_main, AsmState* state, const char* before_assem) {
     ass_main->index = SplitLines(ass_main->buffer, ass_main->out_size, &ass_main->nLines);
 
 
-    state->pass = FIRST_PASS; //
+    state->pass = FIRST_PASS; 
     state->bytecode = (StackElem_t*)calloc(ass_main->nLines*2, sizeof(StackElem_t));
 }

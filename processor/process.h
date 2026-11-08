@@ -1,10 +1,8 @@
 #include "../hnik.h"
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
+//----------------------------------------------- CONSTS -----------------------------------------------
 #define COMMAND_LENGTH 64
 #define LOG_FILE "log.txt"
 #define STACK_CAPACITY 10
@@ -29,7 +27,9 @@ const char* after_ass = "input2.txt";
 
 #define STACK_DEBUG
 
-struct proccessor {
+//-------------------------------------------- STRUCTURES -----------------------------------------------
+
+struct processor {
     stack_t stk;
     stack_t ret_stk;
 
@@ -43,7 +43,7 @@ struct proccessor {
     StackElem_t registers[NUM_REGIST] = {0}; 
 };
 
-typedef void (*command_func_t)(struct proccessor* v_m, size_t* breakflag, errors* err);
+typedef void (*command_func_t)(struct processor* v_m, size_t* breakflag, errors* err);
 
 struct CommandHandler {
     const char* name;
@@ -53,78 +53,81 @@ struct CommandHandler {
 };
 
 
+//--------------------------------------------- FUNCTION DECLARATIONS ---------------------------------
 
 char* ReadFromFile(const char* name, size_t* out_size);
 
 StackElem_t* lf_buffer(const char* name, size_t* buffer_size);
 
-void ReadFromBuffer(proccessor* v_m);
+void ReadFromBuffer(processor* v_m);
 
-void CodeDump(proccessor* v_m);
+void CodeDump(processor* v_m);
 
 void clean_file(void);
 
 const char* CommandName(int command, size_t* arg_flag);
 
-void execution(proccessor* v_m, int command, size_t* break_flag, errors* err);
+void execution(processor* v_m, int command, size_t* break_flag, errors* err);
 
-void DestroyIntel(proccessor* intel);
+void DestroyIntel(processor* intel);
 
-void InitIntel(proccessor* v_m);
+void InitIntel(processor* v_m);
 
+//----------------------------------------- FUNCTIONS FOR ARRAY WITH STRUCTURES -------------------------------------------
 
-void exec_hlt(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_hlt    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_push(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_push   (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_add(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_add    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_sub(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_sub    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_div(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_div    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_out(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_out    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_pop(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_pop    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_push_r(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_push_r (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_mul(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_mul    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_jmp(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_jmp    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_ja(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_ja     (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_jae(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_jae    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_jb(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_jb     (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_jbe(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_jbe    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_je(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_je     (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_jne(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_jne    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_call(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_call   (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_ret(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_ret    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_in(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_in     (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_sqrt(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_sqrt   (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_push_m(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_push_m (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_pop_m(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_pop_m  (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_dmp(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_dmp    (processor* v_m, size_t* breakflag, errors* err);
 
-void exec_push_mr(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_push_mr(processor* v_m, size_t* breakflag, errors* err);
 
-void exec_pop_mr(proccessor* v_m, size_t* breakflag, errors* err);
+void exec_pop_mr (processor* v_m, size_t* breakflag, errors* err);
 
-void check_memory(proccessor* v_m, int mem_addr);
+void check_memory(processor* v_m, size_t mem_addr);
 
+//------------------------------------------ ARRAY WITH COMMANDS ----------------------------------------------
 static const CommandHandler command_table[] = {
     {"HLT",  HLT,  exec_hlt, NO}, 
     {"PUSH", PUSH, exec_push, YES},

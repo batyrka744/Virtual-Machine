@@ -1,11 +1,6 @@
 #include "../hnik.h"
 
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
 #include <ctype.h>
-#include <sys/stat.h>
-
 
 //--------------------------------------------- MACROSES -------------------------------------------
 
@@ -36,6 +31,9 @@ const char* after_ass = "../processor/input2.txt";
 #define YES 1
 #define NO 0
 
+#define ERROR -1
+#define OK 0
+
 
 //------------------------------------------------ LABELS -----------------------------------------------------------
 
@@ -51,9 +49,6 @@ struct LabelsCase {
 
 //-------------------------------------------------- FOR READ --------------------------------------------------------------
 
-
-
-
 struct project {
 
     FILE* file_write;
@@ -62,9 +57,7 @@ struct project {
     Line* index;
 };
 
-
-
-//-------------------------------------------------- ASS -----------------------------------------------------------
+//------------------------------------------ ASSEMBLER'S CHARACTERISTICS --------------------------------------------------
 
 struct AsmState {
 
@@ -82,6 +75,8 @@ enum ArgType {
     ARG_VALUE = 2,
     LABEL = 3,
 };
+
+//--------------------------------------------- COMMAND'S CHARACTERISTIC ---------------------------------------------
 
 struct CommandInfo {
     const char* name;
@@ -115,8 +110,6 @@ static CommandInfo all_commands[] = {
     {"IN",   IN,   ARG_NO},
     {"DMP", DMP, ARG_NO}
 };
-
-
 
 //---------------------------------------------- FUNCTIONS DECLARATION --------------------------------------------
 
