@@ -1,11 +1,99 @@
-PUSH 3
-POP AX
+PUSH 25
+POP DX      ;radius
 
-PUSH 42
-POP [AX]
 
-PUSH [AX]
-OUT
+PUSH 0
+POP CX          ;counter
+
+
+PUSH 50
+POP BX    ;BX-Y
+
+JMP FOR_I
+
+
+
+FOR_I:
+    PUSH 50
+    POP AX    ;AX-X
+
+    JMP FOR_J
+
+
+    FOR_J:
+        PUSH AX
+        PUSH 25
+        SUB
+
+        PUSH AX
+        PUSH 25
+        SUB
+
+        MUL
+
+
+        PUSH BX
+        PUSH 25
+        SUB
+        PUSH 1.3                      ;for stretching
+        MUL
+
+        PUSH BX
+        PUSH 25
+        SUB
+        PUSH 1.3                      ;for stretching
+        MUL
+
+
+        MUL
+
+
+        ADD
+
+        PUSH DX
+        PUSH DX 
+        MUL
+
+        CALL PAINT
+
+        PUSH CX
+        PUSH 1
+        ADD
+        POP CX
+
+
+        PUSH AX
+        PUSH 1
+        SUB
+        POP AX
+
+        PUSH AX
+        PUSH 0
+        JBE FOR_J
+
+
+    PUSH BX
+    PUSH 1
+    SUB
+    POP BX
+
+    PUSH BX
+    PUSH 0
+    JBE FOR_I
 
 DMP
 HLT
+
+
+PAINT:
+    JAE INSIDE
+    PUSH 0
+    POP [CX]
+    RET
+
+
+
+INSIDE:
+    PUSH 1
+    POP [CX]
+    RET

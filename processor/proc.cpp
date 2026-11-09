@@ -2,7 +2,7 @@
 
 
 int main() {
-
+    
     clean_file();  
 
     processor intel;

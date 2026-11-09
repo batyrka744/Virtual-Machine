@@ -9,7 +9,7 @@
 #define RECURSION_DEEPTH 10
 #define MAX_MEMORY_SIZE 5000
 
-#define DIAMETR 5
+#define DIAMETR 51
 #define DUMP_MEMORY_FILE stdout
 
 #define YES 1
