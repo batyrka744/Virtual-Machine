@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+
 #define LOG_FILE "log.txt"
 
 
@@ -17,14 +18,13 @@
  */
 errors StackInit(stack_t* stk, int capacity ON_DBG(, const char* name, const char* file, int line)) {
 
-    if (capacity <= 0) return ERR_WRONG_CAPACITY;
+    my_assert(capacity > 0, ERR_WRONG_CAPACITY);
 
-    assert(stk != NULL);
+    my_assert(stk != NULL, ERR_NULL_PTR);
 
     stk->real_data = (StackElem_t*)calloc(capacity + 2, sizeof(StackElem_t));
-    if (stk->real_data == NULL) {
-        return ERR_NO_MEMORY;
-    }
+    my_assert(stk->real_data != NULL, ERR_NO_MEMORY);
+
     stk->real_data[0] = canary;
 
     stk->data = stk->real_data + 1;
@@ -147,8 +147,8 @@ errors StackError(stack_t* stk) {
     ON_DBG(
     if (stk->canary_left != canary || stk->canary_right != canary) {
         return ERR_STK_CANARY;
-    }
-)
+    })
+    
     if (stk->data == NULL) {
         return ERR_NULL_DATA;
     }

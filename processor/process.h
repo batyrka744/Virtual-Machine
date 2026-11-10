@@ -1,6 +1,8 @@
+#pragma once
 #include "../hnik.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "exec_functs.h"
 
 //----------------------------------------------- CONSTS -----------------------------------------------
 #define COMMAND_LENGTH 64
@@ -9,20 +11,15 @@
 #define RECURSION_DEEPTH 10
 #define MAX_MEMORY_SIZE 5000
 
-#define DIAMETR 51
+#define DIAMETR 21
 #define DUMP_MEMORY_FILE stdout
 
 #define YES 1
 #define NO 0
 
 
-const char* before_ass = "../assembler/input1.txt";
-const char* after_ass = "input2.txt";
-
-// 5 //
-// правки все внесешь
-// квадратка и факториал точно на 7 + красивый свитч
-// оперативка на // 8 // 9 // 
+static const char* before_ass = "../assembler/input1.txt";
+static const char* after_ass = "input2.txt";
 
 
 #define STACK_DEBUG
@@ -40,7 +37,7 @@ struct processor {
     StackElem_t* memory;
     size_t memory_size;
 
-    StackElem_t registers[NUM_REGIST] = {0}; 
+    StackElem_t registers[]; 
 };
 
 typedef void (*command_func_t)(struct processor* v_m, size_t* breakflag, errors* err);
@@ -74,58 +71,6 @@ void DestroyIntel(processor* intel);
 void InitIntel(processor* v_m);
 
 //----------------------------------------- FUNCTIONS FOR ARRAY WITH STRUCTURES -------------------------------------------
-
-void exec_hlt    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_push   (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_add    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_sub    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_div    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_out    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_pop    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_push_r (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_mul    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_jmp    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_ja     (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_jae    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_jb     (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_jbe    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_je     (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_jne    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_call   (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_ret    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_in     (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_sqrt   (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_push_m (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_pop_m  (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_dmp    (processor* v_m, size_t* breakflag, errors* err);
-
-void exec_push_mr(processor* v_m, size_t* breakflag, errors* err);
-
-void exec_pop_mr (processor* v_m, size_t* breakflag, errors* err);
-
-void check_memory(processor* v_m, size_t mem_addr);
 
 //------------------------------------------ ARRAY WITH COMMANDS ----------------------------------------------
 static const CommandHandler command_table[] = {
