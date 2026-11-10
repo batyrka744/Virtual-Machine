@@ -11,6 +11,7 @@ int main(int argc, char* argv[]) {
         start_work(&ass_main, &state, before_ass);  //initialization of structs
     else {
         char beginning[FILE_NAME_LENGTH] = "Tests/";
+        strcat(beginning, argv[1]);
         start_work(&ass_main, &state, beginning);  //initialization of structs
     }
         
@@ -155,30 +156,6 @@ int ParseWithArg(const CommandInfo* cmd, const char* end_of_line, AsmState* stat
 
         return OK;
     }
-
-    /*if (cmd->arg == REG) {
-        char reg_name[COMMAND_LENGTH] = {0};
-        int offset = 0;
-
-        if (sscanf(end_of_line, "%s%n", reg_name, &offset) != 1) {
-            printf(RED "Syntax error: rubbish after register '%s'\n" RESET, reg_name);
-            return -1;
-        }
-        if (CheckRubbish(end_of_line + offset) != 0) {
-            printf(RED "Syntax Error: rubbish after register '%s'\n" RESET, reg_name);
-            return -1;
-        }
-
-        int reg_num = FindRegister((const char*)reg_name);
-        if (reg_num == NOT_FOUNDED) {
-            printf(RED "Invalid name of register" RESET);
-        }
-        state->bytecode[state->ip] = (StackElem_t)cmd->opcode;
-        state->bytecode[state->ip + 1] = (StackElem_t)reg_num;
-        state->ip += 2;
-
-        return 0;
-    }*/
 
     if (cmd->arg == ARG_VALUE) {     //если либо регистр либо число(PUSH) либо оперативная память
 
@@ -362,7 +339,8 @@ char* ReadFromFile(const char* name, size_t* out_size) {
 
     struct stat file_info = {0};
     int fd = fileno(file);
-    my_assert(fstat(fd, &file_info) == 0, NULL);
+    int f_stat = fstat(fd, &file_info);
+    my_assert(f_stat == 0, NULL);
     size_t file_size = (size_t)file_info.st_size;
 
 

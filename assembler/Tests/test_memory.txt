@@ -1,4 +1,4 @@
-PUSH 25
+IN
 POP DX      ;radius
 
 
@@ -6,7 +6,10 @@ PUSH 0
 POP CX          ;counter
 
 
-PUSH 50
+PUSH DX
+PUSH 2
+MUL
+
 POP BX    ;BX-Y
 
 JMP FOR_I
@@ -14,7 +17,10 @@ JMP FOR_I
 
 
 FOR_I:
-    PUSH 50
+    PUSH DX
+    PUSH 2
+    MUL
+
     POP AX    ;AX-X
 
     JMP FOR_J
@@ -22,26 +28,30 @@ FOR_I:
 
     FOR_J:
         PUSH AX
-        PUSH 25
+        PUSH DX
         SUB
+        PUSH 1.3                     ;for stretching
+        MUL
 
         PUSH AX
-        PUSH 25
+        PUSH DX
         SUB
+        PUSH 1.3                     ;for stretching
+        MUL
 
         MUL
 
 
         PUSH BX
-        PUSH 25
+        PUSH DX
         SUB
-        PUSH 1.3                      ;for stretching
+        PUSH 1                     ;for stretching
         MUL
 
         PUSH BX
-        PUSH 25
+        PUSH DX
         SUB
-        PUSH 1.3                      ;for stretching
+        PUSH 1                     ;for stretching
         MUL
 
 

@@ -1,8 +1,10 @@
+#pragma once
 #include "Stack_canary.h"
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include "my_ass.h"
 
 //--------------------------------------------- MACROSES -------------------------------------
 
@@ -15,16 +17,6 @@
 #define CYAN "\x1b[36m"
 #define WHITE "\x1b[37m"
 #define RESET "\x1b[0m"
-
-#define my_assert(exp, ret) if(!(exp)) {\
-    \
-    printf(YELLOW "%s:%d: [Assertation failed: %s]\n" RESET, __FILE__, __LINE__, #exp);\
-    return ret;}     //fprintf
-
-#define my_assert_tell(exp, text, ret) if(!(exp)) {\
-    \
-    printf(YELLOW "%s:%d: [Assertation failed: %s]\n" RESET, __FILE__, __LINE__, text);\
-    return ret;} 
 
 //---------------------------------------------- ENUMS ---------------------------------------------------
 

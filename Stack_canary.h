@@ -1,3 +1,4 @@
+#pragma once
 typedef double StackElem_t;
 const StackElem_t canary = 0xEBADA1;
 
@@ -5,6 +6,7 @@ const StackElem_t canary = 0xEBADA1;
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "my_ass.h"
 
 #ifdef STACK_DEBUG
 #define ON_DBG(...)  __VA_ARGS__
@@ -12,7 +14,15 @@ const StackElem_t canary = 0xEBADA1;
 #define ON_DBG(...)
 #endif
 
-
+#define BLACK "\x1b[30m"
+#define RED "\x1b[31m"
+#define GREEN "\x1b[32m"
+#define YELLOW "\x1b[33m"
+#define BLUE "\x1b[34m"
+#define MAGENTA "\x1b[35m"
+#define CYAN "\x1b[36m"
+#define WHITE "\x1b[37m"
+#define RESET "\x1b[0m"
 
 #define POISON_DATA NAN
 #define POISON_SIZE -1488
@@ -26,9 +36,6 @@ const StackElem_t canary = 0xEBADA1;
         free(stk->real_data);\
         assert(0);}\
     } while(0)
-
-
-
 
 enum errors {ERR_OK = 0, ERR_NULL_PTR = 1, ERR_NULL_DATA = 2,
              ERR_WRONG_CAPACITY = 3, ERR_WRONG_SIZE = 4,
