@@ -1,7 +1,6 @@
 #include "process.h"
 
 
-
 int main() {
     
     clean_file();  
@@ -9,7 +8,7 @@ int main() {
     processor intel = {0};//Tests, bin, asm   
     InitIntel(&intel);
     
-    intel.code = lf_buffer(after_ass, &intel.buffer_size);  //init
+    
     my_assert(intel.code != NULL, -1);  
 
     ReadFromBuffer(&intel);
@@ -26,6 +25,9 @@ int main() {
 void ReadFromBuffer(processor* v_m) {
     my_assert(v_m != NULL,);  
 
+    FILE* file = fopen(LOG_FILE, "w");
+    my_assert(file != NULL,);
+
     int command = 0;
 
     errors err = ERR_OK;
@@ -33,12 +35,13 @@ void ReadFromBuffer(processor* v_m) {
 
     while ((v_m->pc < v_m->buffer_size) && (break_flag == 0)) {   
 
-        CodeDump(v_m);
+        CodeDump(v_m, file);
         command = (int)v_m->code[v_m->pc];
         
         execution(v_m, command, &break_flag, &err);
         my_assert(err == ERR_OK,);
     }
+    fclose(file);
 }
     
 /**
@@ -54,11 +57,29 @@ void execution(processor* v_m, int command, size_t* break_flag, errors* err) {
     my_assert(break_flag != NULL,);
     my_assert(err != NULL,);
     my_assert(command >= 0,);
-    my_assert(command <= sizeof(command_table) / sizeof(command_table[0]),);
     
-    command_table[command].func(v_m, break_flag, err);
+    const CommandHandler* handler = find_command_handler(command);
+    my_assert(handler != NULL,); 
+    handler->func(v_m, break_flag, err);
 }
 
+/**
+ * @brief finds pointer to handler with this comand
+ * 
+ * @param[in] command command's opcode
+ * @return const CommandHandler* pointer to handler with this comand
+ */
+const CommandHandler* find_command_handler(int command) {
+    size_t table_size = sizeof(command_table) / sizeof(command_table[0]);
+
+    for (size_t i = 0; i < table_size; i++) {
+        if (command_table[i].opcode == command) {
+            return &command_table[i];
+        }
+    }
+
+    return NULL;
+}
 
 
 /**
@@ -66,10 +87,10 @@ void execution(processor* v_m, int command, size_t* break_flag, errors* err) {
  * 
  * @param[in, out] v_m pointer to structure with characteristic of processor 
  */
-void CodeDump(processor* v_m) {
+void CodeDump(processor* v_m, FILE* file) {
     my_assert(v_m != NULL,);
     
-    FILE* file = fopen(LOG_FILE, "a");
+    
     my_assert(file != NULL,);
 
     size_t empty_flag = 0;
@@ -97,7 +118,6 @@ void CodeDump(processor* v_m) {
     }
 
     fprintf(file, "\n");
-    fclose(file);
 }
 
 /**
@@ -176,8 +196,11 @@ const char* CommandName(int command, size_t* arg_flag) {
     my_assert(command >= 0, "Error");
     my_assert(command <= sizeof(command_table) / sizeof(command_table[0]), "Error")
 
-    *arg_flag = (command_table[command].has_arg != NO) ? 1 : 0;
-    return command_table[command].name;
+    const CommandHandler* handler = find_command_handler(command);
+    my_assert(handler != NULL, "");
+
+    *arg_flag = (handler->has_arg != NO) ? 1 : 0;
+    return handler->name;
 }
 
 
@@ -213,4 +236,6 @@ void InitIntel(processor* v_m) {
     v_m->memory = (StackElem_t*)calloc(DIAMETR * DIAMETR, sizeof(StackElem_t));
     my_assert(v_m->memory != NULL,);
     v_m->memory_size = DIAMETR * DIAMETR;
+
+    v_m->code = lf_buffer(after_ass, &v_m->buffer_size);
 }

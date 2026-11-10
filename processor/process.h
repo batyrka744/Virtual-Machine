@@ -5,8 +5,9 @@
 #include "exec_functs.h"
 
 //----------------------------------------------- CONSTS -----------------------------------------------
+
 #define COMMAND_LENGTH 64
-#define LOG_FILE "log.txt"
+#define LOG_FILE "code_log.txt"
 #define STACK_CAPACITY 10
 #define RECURSION_DEEPTH 10
 #define MAX_MEMORY_SIZE 5000
@@ -37,7 +38,7 @@ struct processor {
     StackElem_t* memory;
     size_t memory_size;
 
-    StackElem_t registers[]; 
+    StackElem_t registers[NUM_REGIST]; 
 };
 
 typedef void (*command_func_t)(struct processor* v_m, size_t* breakflag, errors* err);
@@ -58,7 +59,7 @@ StackElem_t* lf_buffer(const char* name, size_t* buffer_size);
 
 void ReadFromBuffer(processor* v_m);
 
-void CodeDump(processor* v_m);
+void CodeDump(processor* v_m, FILE* file);
 
 void clean_file(void);
 
@@ -70,36 +71,40 @@ void DestroyIntel(processor* intel);
 
 void InitIntel(processor* v_m);
 
-//----------------------------------------- FUNCTIONS FOR ARRAY WITH STRUCTURES -------------------------------------------
+const CommandHandler* find_command_handler(int command);
 
 //------------------------------------------ ARRAY WITH COMMANDS ----------------------------------------------
+
 static const CommandHandler command_table[] = {
-    {"HLT",  HLT,  exec_hlt, NO}, 
     {"PUSH", PUSH, exec_push, YES},
+    {"PUSHr", PUSHr, exec_push_r, YES},
+    {"POP",  POP,  exec_pop, YES},
+    {"HLT",  HLT,  exec_hlt, NO}, 
     {"ADD",  ADD,  exec_add, NO},
     {"SUB",  SUB,  exec_sub, NO},
+    {"MUL",  MUL,  exec_mul, NO},
+    {"IN",   IN,   exec_in, NO},
+
+    {"JA",   JA,   exec_ja, YES},
+    {"JB",   JB,   exec_jb, YES},
+
     {"DIV",  DIV,  exec_div, NO},
     {"OUT",  OUT,  exec_out, NO},
-    {"POP",  POP,  exec_pop, YES},
-    {"PUSHr", PUSHr, exec_push_r, YES},
-    {"MUL",  MUL,  exec_mul, NO},
-
-    {"JMP",  JMP,  exec_jmp, YES},
-    {"JA",   JA,   exec_ja, YES},
-    {"JAE",  JAE,  exec_jae, YES},
-    {"JB",   JB,   exec_jb, YES},
-    {"JBE",  JBE,  exec_jbe, YES},
-    {"JE",   JE,   exec_je, YES},
-    {"JNE",  JNE,  exec_jne, YES},
-
+    
     {"CALL", CALL, exec_call, YES},
     {"RET",  RET,  exec_ret, NO},  
 
-    {"IN",   IN,   exec_in, NO},
-    {"SQRT", SQRT, exec_sqrt, NO},
     {"PUSHm", PUSHm, exec_push_m, YES},
     {"POPm", POPm, exec_pop_m, YES},
     {"DMP", DMP, exec_dmp, NO},
     {"PUSHmr", PUSHmr, exec_push_mr, YES},
     {"POPmr", POPmr, exec_pop_mr, YES},
+
+    {"SQRT", SQRT, exec_sqrt, NO},
+
+    {"JMP",  JMP,  exec_jmp, YES},
+    {"JAE",  JAE,  exec_jae, YES},
+    {"JBE",  JBE,  exec_jbe, YES},
+    {"JE",   JE,   exec_je, YES},
+    {"JNE",  JNE,  exec_jne, YES},
 };
